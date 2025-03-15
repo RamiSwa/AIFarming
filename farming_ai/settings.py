@@ -104,12 +104,12 @@ SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 # ✅ Cookie Settings
 SESSION_COOKIE_NAME = "sessionid"  # Standard session cookie name
-SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', default=True, cast=bool)
+SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', default=True)
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # ✅ Forces logout when browser closes
 SESSION_COOKIE_HTTPONLY = True  # ✅ Prevents JavaScript from accessing session cookies
 
 # ✅ CSRF Settings (Important)
-CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', default=True, cast=bool)
+CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', default=True)
 CSRF_COOKIE_HTTPONLY = False
 
 
@@ -259,7 +259,7 @@ MESSAGE_TAGS = {
 # SMTP os.getenvuration
 EMAIL_HOST = os.getenv('EMAIL_HOST')
 EMAIL_PORT = os.getenv('EMAIL_PORT', cast=int)
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', cast=bool)
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS')
 
 # Email credentials
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')  # your email address
