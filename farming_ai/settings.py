@@ -24,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dsj68iiok02=&#q56$4+l4x73=3*i7z@e&7o_rwf#@^ei4i@$k")
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = os.getenv('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',')
 
 FRONTEND_URL = "http://127.0.0.1:8000"  # Change this to your frontend domain if needed
 
@@ -104,16 +104,16 @@ SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 # ✅ Cookie Settings
 SESSION_COOKIE_NAME = "sessionid"  # Standard session cookie name
-SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=True, cast=bool)
+SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', default=True, cast=bool)
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # ✅ Forces logout when browser closes
 SESSION_COOKIE_HTTPONLY = True  # ✅ Prevents JavaScript from accessing session cookies
 
 # ✅ CSRF Settings (Important)
-CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=True, cast=bool)
+CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', default=True, cast=bool)
 CSRF_COOKIE_HTTPONLY = False
 
 
-# ✅ CORS Configuration
+# ✅ CORS Os.getenvuration
 # ✅ Allow X-Auth-Token in responses
 CORS_ALLOW_HEADERS = [
     'authorization',
@@ -125,7 +125,7 @@ CORS_ALLOW_HEADERS = [
 
 # ✅ Enable CORS for your frontend (Adjust as needed)
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://127.0.0.1:8000').split(',')
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', default='http://127.0.0.1:8000').split(',')
 
 
 # ✅ Allow X-Auth-Token in Django's security headers
@@ -155,7 +155,7 @@ WSGI_APPLICATION = 'farming_ai.wsgi.application'
 
 AUTH_USER_MODEL = 'accounts.User'
 
-# Axes Configuration (Brute-force protection)
+# Axes Os.getenvuration (Brute-force protection)
 AXES_FAILURE_LIMIT = 5  # Lockout after 5 failed attempts
 AXES_COOLOFF_TIME = 30  # Allow retry after 30 minutes
 AXES_RESET_ON_SUCCESS = True  # ✅ Reset failure count after a successful login
@@ -163,7 +163,7 @@ AXES_LOCKOUT_PARAMETERS = ["username", "ip_address"]  # ✅ Track by username + 
 
 
 
-# Defender Configuration (Another layer of brute-force protection)
+# Defender Os.getenvuration (Another layer of brute-force protection)
 DEFENDER_LOGIN_FAILURE_LIMIT = 5
 DEFENDER_COOLOFF_TIME = 60  # 1 hour lockout
 
@@ -187,7 +187,7 @@ import os
 import dj_database_url
 
 DATABASES = {
-    'default': dj_database_url.config(default=os.getenv("DATABASE_URL"))
+    'default': dj_database_url.os.getenv(default=os.getenv("DATABASE_URL"))
 }
 
 
@@ -255,27 +255,27 @@ MESSAGE_TAGS = {
 
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# SMTP configuration
-# SMTP configuration
-EMAIL_HOST = config('EMAIL_HOST')
-EMAIL_PORT = config('EMAIL_PORT', cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
+# SMTP os.getenvuration
+# SMTP os.getenvuration
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_PORT = os.getenv('EMAIL_PORT', cast=int)
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', cast=bool)
 
 # Email credentials
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')  # your email address
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')  # your app-specific password
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')  # your email address
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')  # your app-specific password
 
 # Email recipient for contact notifications (set this in your .env file)
-CONTACT_NOTIFICATION_EMAIL = config('CONTACT_NOTIFICATION_EMAIL', default='info@ramireviews.com')
+CONTACT_NOTIFICATION_EMAIL = os.getenv('CONTACT_NOTIFICATION_EMAIL', default='info@ramireviews.com')
 
 
 # Path to the trained models directory
 TRAINED_MODELS_DIR = os.path.join(BASE_DIR, "trained_models")
 
 # OpenCage API Key
-OPENCAGE_API_KEY = config("OPENCAGE_API_KEY", default="")
+OPENCAGE_API_KEY = os.getenv("OPENCAGE_API_KEY", default="")
 # Celery settings
-# Celery Configuration
+# Celery Os.getenvuration
 CELERY_BROKER_URL = "redis://cache:6379/0"  # Use Redis as the broker
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
