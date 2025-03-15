@@ -191,13 +191,14 @@ DATABASES = {
         'NAME': os.getenv("POSTGRES_DB", "railway"),
         'USER': os.getenv("POSTGRES_USER", "postgres"),
         'PASSWORD': os.getenv("POSTGRES_PASSWORD", "lrHTviTOZsjLANrQwpoCZXiDToMcOSrE"),
-        'HOST': os.getenv("PGHOST", "postgres.railway.internal"),
-        'PORT': os.getenv("PGPORT", "5432"),
+        'HOST': os.getenv("PGHOST", "ballast.proxy.rlwy.net"),  # ✅ Correct host
+        'PORT': os.getenv("PGPORT", "43029"),  # ✅ Correct port
     }
 }
 
 if not DATABASES['default']['NAME']:
     raise Exception("PostgreSQL Database not found. Check Railway environment variables.")
+
 
 
 # Password validation
