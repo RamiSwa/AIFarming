@@ -26,9 +26,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dsj68iiok02=&#q56$4+l4x73=3*i7z@e&7o_rwf#@^ei4i@$k")
 DEBUG = os.getenv('DEBUG', default=False)
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',')
+
+
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default='127.0.0.1,localhost,aifarming-production.up.railway.app').split(',')
 
 FRONTEND_URL = "http://127.0.0.1:8000"  # Change this to your frontend domain if needed
+
 
 
 # Application definition
