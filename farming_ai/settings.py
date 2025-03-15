@@ -259,7 +259,7 @@ MESSAGE_TAGS = {
 # SMTP os.getenvuration
 # SMTP os.getenvuration
 EMAIL_HOST = os.getenv('EMAIL_HOST')
-EMAIL_PORT = os.getenv('EMAIL_PORT', cast=int)
+EMAIL_PORT = os.getenv('EMAIL_PORT')
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS')
 
 # Email credentials
