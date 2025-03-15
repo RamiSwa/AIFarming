@@ -189,7 +189,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv("POSTGRES_DB", "railway"),
-        'USER': os.getenv("POSTGRES_USER", "postgres"),
+        'USER': os.getenv("POSTGRES_USER", "farm_admin"),
         'PASSWORD': os.getenv("POSTGRES_PASSWORD", "securepasswordswaed123"),
         'HOST': os.getenv("PGHOST", "ballast.proxy.rlwy.net"),  # ✅ Correct host
         'PORT': os.getenv("PGPORT", "43029"),  # ✅ Correct port
