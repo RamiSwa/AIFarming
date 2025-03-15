@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dsj68iiok02=&#q56$4+l4x73=3*i7z@e&7o_rwf#@^ei4i@$k")
-DEBUG = os.getenv('DEBUG', default=False, cast=bool)
+DEBUG = os.getenv('DEBUG', default=False)
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',')
 
