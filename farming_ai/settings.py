@@ -190,7 +190,8 @@ DATABASES = {
     'default': dj_database_url.config(default=os.getenv("DATABASE_URL"))
 }
 
-
+if not DATABASES['default']:
+    raise Exception("DATABASE_URL is missing. Make sure it's set in Railway variables.")
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
