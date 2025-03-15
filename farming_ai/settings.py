@@ -183,16 +183,13 @@ AUTHENTICATION_BACKENDS = [
 # }
 
 
+import os
+import dj_database_url
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('POSTGRES_DB'),
-        'USER': config('POSTGRES_USER'),
-        'PASSWORD': config('POSTGRES_PASSWORD'),
-        'HOST': config('POSTGRES_HOST'),
-        'PORT': config('POSTGRES_PORT'),
-    }
+    'default': dj_database_url.config(default=os.getenv("DATABASE_URL"))
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

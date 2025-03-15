@@ -71,4 +71,4 @@ django-axes
 django-defender
 django-recaptcha
 django-jazzmin
-
+dj-database-url==2.3.0
