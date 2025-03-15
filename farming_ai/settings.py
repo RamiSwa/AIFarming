@@ -83,23 +83,47 @@ REST_FRAMEWORK = {
 }
 
 
+# CORS & CSRF Settings
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = os.getenv(
+    'CORS_ALLOWED_ORIGINS', 
+    default='http://127.0.0.1:8000,https://aifarming-production.up.railway.app'
+).split(',')
+
+CSRF_TRUSTED_ORIGINS = os.getenv(
+    'CSRF_TRUSTED_ORIGINS', 
+    default='https://aifarming-production.up.railway.app,http://127.0.0.1:8000'
+).split(',')
+
+# Middleware Configuration
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    "whitenoise.middleware.WhiteNoiseMiddleware", 
-    'django.contrib.sessions.middleware.SessionMiddleware',
 
-    # CORS Middleware (should be near the top)
-    'corsheaders.middleware.CorsMiddleware',
-    'axes.middleware.AxesMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # ✅ Static Files Middleware (for WhiteNoise)
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+
+    # ✅ Session & Authentication Middleware
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
 
-    
-    'django.contrib.messages.middleware.MessageMiddleware',
+    # ✅ CORS Middleware (should be near the top)
+    'corsheaders.middleware.CorsMiddleware',
+
+    # ✅ Django Security Middleware
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    "farming_ai.middleware.RestrictAdminAccessMiddleware",  # ✅ Ensure correct path
+    
+    # ✅ Django Messages Middleware
+    'django.contrib.messages.middleware.MessageMiddleware',
+
+    # ✅ Third-Party Middleware
+    'axes.middleware.AxesMiddleware',
+
+    # ✅ Custom Middleware (Ensure correct path)
+    "farming_ai.middleware.RestrictAdminAccessMiddleware",  
 ]
+
 
 
 
@@ -128,8 +152,17 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # ✅ Enable CORS for your frontend (Adjust as needed)
+# CORS & CSRF Settings
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', default='http://127.0.0.1:8000').split(',')
+CORS_ALLOWED_ORIGINS = os.getenv(
+    'CORS_ALLOWED_ORIGINS', 
+    default='http://127.0.0.1:8000,https://aifarming-production.up.railway.app'
+).split(',')
+
+CSRF_TRUSTED_ORIGINS = os.getenv(
+    'CSRF_TRUSTED_ORIGINS', 
+    default='https://aifarming-production.up.railway.app,http://127.0.0.1:8000'
+).split(',')
 
 
 # ✅ Allow X-Auth-Token in Django's security headers
