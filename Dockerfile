@@ -14,6 +14,10 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# ✅ Install PostgreSQL client & curl
+RUN apt-get update && apt-get install -y postgresql-client curl && rm -rf /var/lib/apt/lists/*
+
+
 # ✅ Copy the project files (except .env)
 COPY . .
 
