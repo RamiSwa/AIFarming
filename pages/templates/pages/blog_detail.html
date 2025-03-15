@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}{{ blog_post.title }} - AI Farming{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-primary text-center">
+        <a href="{{ blog_post.get_absolute_url }}" class="text-dark text-decoration-none">
+            {{ blog_post.title }}
+        </a>
+    </h1>
+    
+    <p class="text-muted text-center">
+        By {{ blog_post.author.first_name }} {{ blog_post.author.last_name }} | Published on {{ blog_post.created_at|date:"F d, Y" }}
+    </p>
+    
+
+    {% if blog_post.image %}
+    <div class="row align-items-center">
+        <div class="col-md-6 text-center">
+            <img src="{{ blog_post.image.url }}" class="blog-post-image img-fluid rounded mb-4" alt="{{ blog_post.title }}">
+        </div>
+        <div class="col-md-6">
+            <p class="lead blog-content">{{ blog_post.content|linebreaks }}</p>
+        </div>
+    </div>
+    
+    {% else %}
+        <p class="lead blog-content">{{ blog_post.content|linebreaks }}</p>
+    {% endif %}
+
+    <!-- ✅ Related Posts Section -->
+    {% if related_posts %}
+    <section class="mt-5 text-center">
+        <h3 class="text-primary">🔗 Related Posts</h3>
+        <div class="row justify-content-center mt-4">
+            {% for related in related_posts %}
+            <div class="col-md-4 d-flex">
+                <div class="card blog-card w-100">
+                    <img src="{{ related.image.url }}" class="card-img-top" alt="{{ related.title }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ related.title }}</h5>
+                        <p class="card-text">{{ related.content|truncatewords:20 }}</p>
+                        <a href="{{ related.get_absolute_url }}" class="btn btn-outline-primary read-more-btn">Read More →</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>    
+    {% endif %}
+
+    <!-- ✅ Back to Blog Button -->
+    <a href="{% url 'blog_list' %}" class="btn btn-outline-secondary mt-4 back-to-blog">← Back to Blog</a>
+
+</div>
+
+<!-- ✅ Floating Back to Top Button -->
+<button id="back-to-top" onclick="scrollToTop()">⬆ Back to Top</button>
+
+<style>
+    /* Back to Top Button */
+    #back-to-top {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #007bff;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        display: none;
+        font-size: 16px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    #back-to-top:hover {
+        background-color: #0056b3;
+    }
+    .blog-content {
+        font-size: 20px; /* Slightly larger for better readability */
+        line-height: 1.8; /* More spacing between lines */
+    }
+    .back-to-blog {
+        font-size: 18px;
+        padding: 12px 24px;
+    }
+    .blog-post-image {
+        max-width: 100%; /* ✅ Ensures the image doesn't overflow */
+        max-height: 500px; /* ✅ Slightly larger for balance */
+        object-fit: cover; /* ✅ Keeps image proportionate */
+        display: block;
+        margin: 0 auto 20px; /* ✅ Adds bottom margin for spacing */
+        border-radius: 10px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .blog-content {
+        font-size: 20px;
+        line-height: 2; /* ✅ More spacing for better readability */
+    }
+    
+    .back-to-blog {
+        font-size: 18px;
+        padding: 12px 24px;
+        margin-top: 30px; /* ✅ Adds more space above the button */
+    }
+    
+    
+    @media (max-width: 768px) {
+        .blog-post-image {
+            max-width: 90%; /* ✅ Slightly larger on mobile but still well-contained */
+        }
+    }
+    
+    
+</style>
+
+<script>
+    /* Show Back to Top Button on Scroll */
+    window.onscroll = function() {
+        let button = document.getElementById("back-to-top");
+        if (document.documentElement.scrollTop > 200) {
+            button.style.display = "block";
+        } else {
+            button.style.display = "none";
+        }
+    };
+
+    function scrollToTop() {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+</script>
+{% endblock %}

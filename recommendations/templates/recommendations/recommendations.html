@@ -1,0 +1,575 @@
+{% extends 'base.html' %}
+
+
+{% block extra_head %}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+
+  <!-- Flatpickr CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  
+    
+    
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<!-- In your extra_head or base.html -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+
+
+<style>
+  /* Additional styling for recommendations internal tab navigation */
+  .nav-recommendations {
+    margin-bottom: 20px;
+  }
+
+  /* Green Active Tab Styling with Rounded Corners */
+  .nav-tabs .nav-link.active {
+    background-color: #198754; /* Success Green */
+    color: #fff;
+    font-weight: bold;
+    border-color: #198754 #198754 #fff;
+    border-radius: 8px 8px 0 0; /* Rounded top corners */
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15); /* Soft shadow for depth */
+    transition: all 0.3s ease-in-out; /* Smooth transition */
+  }
+
+  /* Hover Effect */
+  .nav-tabs .nav-link:hover {
+    background-color: rgba(25, 135, 84, 0.85);
+    color: white;
+    transition: all 0.2s ease-in-out;
+  }
+
+  /* Optional: increase icon size for better visibility */
+  .nav-tabs .nav-link i {
+    font-size: 1.3rem;
+    margin-right: 5px;
+  }
+
+  /* Animation Effect for Smooth Tab Switching */
+  .tab-pane {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .tab-pane.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+ /* RESPONSIVE DESIGN */
+  
+  /* Ensure summary cards stack vertically on smaller screens */
+  @media (max-width: 768px) {
+    .summary-card {
+      height: auto;
+      margin-bottom: 10px;
+    }
+    .summary-card p {
+      font-size: 1rem; /* Reduce font size for better readability */
+    }
+  }
+
+  /* Ensure Recommendations Map scales properly */
+  #recommendations-map {
+    width: 100%;
+    min-height: 300px; /* Prevents collapsing on smaller screens */
+  }
+
+  /* Make tab navigation scrollable on small screens */
+  @media (max-width: 768px) {
+    .nav-tabs {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      white-space: nowrap;
+      display: flex;
+    }
+  }
+
+  /* Convert tabs into a dropdown on mobile */
+  @media (max-width: 576px) {
+    .nav-tabs {
+      display: none;
+    }
+    #mobileTabsDropdown {
+      display: block;
+    }
+  }
+
+  /* Make tables scrollable */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Collapsible sections for better UX */
+  .collapsible-section {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 15px;
+  }
+
+  .collapsible-header {
+    background-color: #f8f9fa;
+    padding: 10px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .collapsible-content {
+    display: none;
+    padding: 10px;
+  }
+
+  .collapsible-content.show {
+    display: block;
+  }
+
+  .dropdown-menu {
+    position: absolute !important;
+    z-index: 1050 !important;
+    width: 100% !important;
+  }
+
+  /* ✅ Ensure the button is always visible */
+  .dropdown-toggle {
+    background-color: white;
+    border: 1px solid #ccc;
+  }
+
+  /* ✅ Improve visibility on small screens */
+  @media (max-width: 576px) {
+    .dropdown-menu {
+      text-align: center;
+      font-size: 1rem;
+    }
+  }
+</style>
+
+
+    <title>{% block title %}Recommendations | AI Farming{% endblock %}</title>
+    {% block extra_css %}{% endblock %}
+
+
+
+{% endblock %}
+
+{% block content %}
+
+<main class="container mt-4">
+  <!-- Page Header -->
+  <header class="mb-4">
+    <h2 class="text-center display-5">🌱 AI-Powered Crop Recommendations</h2>
+    <p class="text-center text-muted">Receive personalized recommendations based on real-time soil and weather data.</p>
+  </header>
+
+  <!-- Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3 col-12">
+      <div class="card summary-card shadow-sm text-center bg-light">
+        <div class="card-body">
+          <h5>🌾 Total Recommendations</h5>
+          <p class="display-6 fw-bold text-success" id="total-recommendations">--</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-12">
+      <div class="card summary-card shadow-sm text-center bg-light">
+        <div class="card-body">
+          <h5>📈 Predicted Yield Avg</h5>
+          <p class="display-6 fw-bold text-primary" id="predicted-yield-avg">--</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-12">
+      <div class="card summary-card shadow-sm text-center bg-light">
+        <div class="card-body">
+          <h5>🔴🟡🟢 Risk Levels</h5>
+          <div class="d-flex justify-content-center">
+            <span class="badge bg-success mx-1" id="low-risk-count">--</span>
+            <span class="badge bg-warning mx-1" id="medium-risk-count">--</span>
+            <span class="badge bg-danger mx-1" id="high-risk-count">--</span>
+          </div>
+          <p id="risk-percentage" class="text-muted mt-2">--</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-12">
+      <div class="card summary-card shadow-sm text-center bg-light">
+        <div class="card-body">
+          <h5>📅 Latest Recommendation</h5>
+          <p class="display-6 fw-bold text-muted" id="latest-recommendation-date">--</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommendations Map -->
+  <div class="card shadow-sm p-3 mb-4">
+    <h5>🌍 Recommendations Map</h5>
+    <div id="recommendations-map"></div>
+  </div>
+
+  <!-- Mobile Dropdown Navigation -->
+  <div class="dropdown d-md-none text-center">
+    <button 
+      class="btn btn-outline-secondary dropdown-toggle w-100" 
+      type="button" 
+      id="mobileDropdown" 
+      data-bs-toggle="dropdown" 
+      aria-expanded="false">
+      🌍 Navigate
+    </button>
+    <ul class="dropdown-menu w-100 text-center" aria-labelledby="mobileDropdown">
+      <li><a class="dropdown-item" href="{% url 'fetch_results' %}">📥 Fetch AI Results</a></li>
+      <li><a class="dropdown-item" href="{% url 'manage_recommendations' %}">📋 Manage Recommendations</a></li>
+      <li><a class="dropdown-item" href="{% url 'csv_upload' %}">📂 CSV Upload & Export</a></li>
+    </ul>
+  </div>
+
+  <!-- Internal Tab Navigation -->
+  <ul class="nav nav-tabs nav-recommendations" id="recommendationsTab" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link {% if request.resolver_match.url_name == 'fetch_results' %}active{% endif %}" 
+         href="{% url 'fetch_results' %}">📥 Fetch AI Results</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.resolver_match.url_name == 'manage_recommendations' %}active{% endif %}" 
+         href="{% url 'manage_recommendations' %}">📋 Manage Recommendations</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.resolver_match.url_name == 'csv_upload' %}active{% endif %}" 
+         href="{% url 'csv_upload' %}">📂 CSV Upload & Export</a>
+    </li>
+  </ul>
+
+<!-- Floating Guide Button -->
+<button class="floating-btn" onclick="toggleGuide()">📖 Guide</button>
+
+<!-- Floating Panel for Guide -->
+<div id="guidePanel" class="floating-panel">
+  <div class="d-flex justify-content-between align-items-center p-3">
+    <h5 class="text-primary">📖 Recommendations Guide</h5>
+    <button class="btn btn-sm btn-outline-danger" onclick="toggleGuide()">❌</button>
+  </div>
+  <ul class="list-group mb-3">
+    <li class="list-group-item"><strong>🌾 Total Recommendations:</strong> Shows how many AI-driven crop recommendations are available.</li>
+    <li class="list-group-item"><strong>📈 Predicted Yield:</strong> Displays the average expected crop yield based on AI analysis.</li>
+    <li class="list-group-item"><strong>🔴🟡🟢 Risk Levels:</strong> Classifies recommendations into low, medium, and high risk.</li>
+    <li class="list-group-item"><strong>📅 Latest Recommendation:</strong> Shows the most recent recommendation date.</li>
+    <li class="list-group-item"><strong>🌍 Recommendations Map:</strong> Displays all AI-generated crop recommendations geographically.</li>
+    <li class="list-group-item"><strong>📥 Fetch AI Results:</strong> Retrieve new AI-powered crop predictions.</li>
+    <li class="list-group-item"><strong>📋 Manage Recommendations:</strong> Modify, approve, or remove AI-generated recommendations.</li>
+    <li class="list-group-item"><strong>📂 CSV Upload & Export:</strong> Upload bulk recommendation data or download insights.</li>
+    <li class="list-group-item text-muted bg-light border-start border-danger ps-2">
+      🚀 <strong>Coming Soon:</strong>
+      <span data-bs-toggle="tooltip" title="⚠️ Future updates will include historical analysis of recommendations and automated alerts.">
+        📊 Advanced Insights & Alerts
+        <i class="bi bi-info-circle text-primary"></i>
+      </span>
+    </li>
+  </ul>
+</div>
+
+</main>
+
+
+<!-- Custom CSS for Summary Cards -->
+<style>
+  /* Ensures each summary card has the same height and adds smooth hover effects */
+  .summary-card {
+    height: 150px; /* Adjust this value as needed */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+  }
+  
+  .summary-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Centering content vertically within the card body */
+  .summary-card .card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+/* Floating Button */
+.floating-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #198754;
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 30px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease-in-out;
+  z-index: 1050;
+}
+
+.floating-btn:hover {
+  background-color: #157347;
+}
+
+/* Floating Guide Panel */
+.floating-panel {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 300px;
+  max-width: 90%;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+  padding: 15px;
+  z-index: 1051;
+  display: none;
+  transition: all 0.3s ease-in-out;
+}
+
+@media (max-width: 576px) {
+  .floating-panel {
+    width: 95%;
+    right: 10px;
+    bottom: 100px;
+  }
+  .floating-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #198754;
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 30px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease-in-out;
+  z-index: 1050;
+}
+}
+
+</style>
+
+  <style>
+    /* Custom Styles for a cleaner look */
+    .list-group-item {
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #f8f9fa;
+        border-left: 5px solid #28a745;
+        font-size: 14px;
+    }
+    .alert-box {
+        background-color: #ffebee;
+        color: #b71c1c;
+        padding: 10px;
+        border-radius: 5px;
+        border-left: 5px solid #d32f2f;
+        font-weight: bold;
+    }
+    #next-best-action {
+        font-size: 1.1rem;
+    }
+    .badge {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+</style>
+
+  {% block recommendations_content %}
+  {% endblock recommendations_content %}
+
+
+    <!-- Bootstrap 5 JS and Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Flatpickr JS -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+<script>
+function toggleGuide() {
+  const guidePanel = document.getElementById("guidePanel");
+  if (guidePanel.style.display === "none" || guidePanel.style.display === "") {
+    guidePanel.style.display = "block";
+  } else {
+    guidePanel.style.display = "none";
+  }
+}
+</script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+    // Ensure the Bootstrap dropdown works properly
+    let dropdownButton = document.getElementById("mobileDropdown");
+    let dropdownMenu = document.querySelector(".dropdown-menu");
+
+    dropdownButton.addEventListener("click", function (event) {
+      event.stopPropagation(); // Prevent accidental closing
+      dropdownMenu.classList.toggle("show"); // Toggle visibility manually if needed
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", function (event) {
+      if (!dropdownButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+        dropdownMenu.classList.remove("show");
+      }
+    });
+  
+
+
+      // 1. Quick Summary Cards remain unchanged.
+      fetch("/recommendations/api/summary/", {
+        headers: { "Authorization": `Token ${sessionStorage.getItem("authToken")}` }
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById("total-recommendations").textContent = data.total;
+        document.getElementById("predicted-yield-avg").textContent = data.predicted_yield_avg;
+        document.getElementById("low-risk-count").textContent = `🟢 ${data.low_risk}`;
+        document.getElementById("medium-risk-count").textContent = `🟡 ${data.medium_risk}`;
+        document.getElementById("high-risk-count").textContent = `🔴 ${data.high_risk}`;
+        document.getElementById("latest-recommendation-date").textContent = data.latest_date;
+        document.getElementById("risk-percentage").textContent =
+          `🟢 ${data.low_pct}% 🟡 ${data.medium_pct}% 🔴 ${data.high_pct}%`;
+      })
+      .catch(error => console.error("Error fetching summary:", error));
+    
+      // --- Map Integration with Improvements ---
+    
+      // Show a loading spinner over the map container.
+      const mapContainer = document.getElementById("recommendations-map");
+      const spinner = document.createElement("div");
+      spinner.id = "map-spinner";
+      spinner.style.position = "absolute";
+      spinner.style.top = "50%";
+      spinner.style.left = "50%";
+      spinner.style.transform = "translate(-50%, -50%)";
+      spinner.style.zIndex = "1000";
+      spinner.innerHTML = `<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>`;
+      mapContainer.appendChild(spinner);
+    
+      // Create an error message container
+      const errorMsg = document.createElement("div");
+      errorMsg.id = "map-error";
+      errorMsg.style.position = "absolute";
+      errorMsg.style.top = "50%";
+      errorMsg.style.left = "50%";
+      errorMsg.style.transform = "translate(-50%, -50%)";
+      errorMsg.style.backgroundColor = "rgba(255,255,255,0.9)";
+      errorMsg.style.padding = "15px";
+      errorMsg.style.borderRadius = "5px";
+      errorMsg.style.display = "none";
+      mapContainer.appendChild(errorMsg);
+    
+      // Initialize the map.
+      let map = L.map("recommendations-map").setView([37.7749, -122.4194], 5);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors"
+      }).addTo(map);
+    
+      // Create a marker cluster group.
+      let markers = L.markerClusterGroup();
+    
+      // Function to load map markers
+      function loadMapMarkers() {
+        // Clear any existing markers from the cluster group.
+        markers.clearLayers();
+        // Remove any error message.
+        errorMsg.style.display = "none";
+        
+        fetch("/recommendations/api/recommendations/?page_size=1000", {
+          headers: { "Authorization": `Token ${sessionStorage.getItem("authToken")}` }
+        })
+        .then(response => response.json())
+        .then(data => {
+          data.results.forEach(rec => {
+            // Ensure weather_data exists and has valid coordinates.
+            if (rec.weather_data && rec.weather_data.latitude && rec.weather_data.longitude) {
+              let lat = rec.weather_data.latitude;
+              let lon = rec.weather_data.longitude;
+              
+              // Determine marker color based on risk level.
+              let iconColor = rec.risk_assessment === "High risk" ? "red" :
+                              rec.risk_assessment === "Medium risk" ? "orange" : "green";
+              
+              let customIcon = new L.Icon({
+                iconUrl: `https://maps.google.com/mapfiles/ms/icons/${iconColor}-dot.png`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -32]
+              });
+              
+              // Add marker to the marker cluster group.
+              let marker = L.marker([lat, lon], { icon: customIcon });
+              let cropName = rec.crop && rec.crop.name ? rec.crop.name : "Unknown";
+              marker.bindPopup(`
+                <strong>🌱 Crop:</strong> ${cropName} <br>
+                <strong>📊 Predicted Yield:</strong> ${parseFloat(rec.predicted_yield).toFixed(2)} <br>
+                <strong>⚠ Risk Level:</strong> <span style="color:${iconColor};">${rec.risk_assessment}</span>
+              `);
+              markers.addLayer(marker);
+            }
+          });
+    
+          // Add the cluster group to the map.
+          map.addLayer(markers);
+    
+          // Fit map bounds to the markers if available.
+          if (markers.getLayers().length > 0 && markers.getBounds().isValid()) {
+            map.fitBounds(markers.getBounds(), { padding: [20, 20] });
+          }
+          // Hide the spinner once loading is complete.
+          spinner.style.display = "none";
+        })
+        .catch(error => {
+          console.error("Error fetching map data:", error);
+          spinner.style.display = "none";
+          errorMsg.textContent = "Unable to load map data. Please try again later.";
+          errorMsg.style.display = "block";
+        });
+      }
+    
+      // Initially load markers.
+      loadMapMarkers();
+    
+      // Optional: Refresh Map Button (you can place this button wherever appropriate in your template)
+      const refreshBtn = document.createElement("button");
+      refreshBtn.textContent = "Refresh Map";
+      refreshBtn.className = "btn btn-secondary";
+      refreshBtn.style.position = "absolute";
+      refreshBtn.style.top = "10px";
+      refreshBtn.style.right = "10px";
+      refreshBtn.style.zIndex = "1001";
+      refreshBtn.addEventListener("click", function () {
+        // Show spinner again when refreshing.
+        spinner.style.display = "block";
+        loadMapMarkers();
+      });
+      mapContainer.appendChild(refreshBtn);
+    });
+    </script>
+    
+
+{% endblock %}

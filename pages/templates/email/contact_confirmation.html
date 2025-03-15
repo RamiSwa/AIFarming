@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Thank You for Contacting Us!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f7f7;
+            padding: 20px;
+        }
+        .email-container {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 600px;
+            margin: auto;
+        }
+        .header {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .content {
+            margin-top: 20px;
+            color: #34495e;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: #7f8c8d;
+            text-align: center;
+        }
+        .message-block {
+            background: #ecf0f1;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <h2 class="header">Thank You for Contacting Us, {{ name }}!</h2>
+        <div class="content">
+            <p>We have received your message:</p>
+            <div class="message-block">
+                {{ message }}
+            </div>
+            <p>Our team will review your inquiry and get back to you within 24-72 hours.</p>
+            <p>
+                If you have any urgent matters, please feel free to 
+                <a href="{{ contact_info.get_whatsapp_link }}" target="_blank">
+                    reach out on WhatsApp
+                </a>.
+            </p>
+            
+        </div>
+        <div class="footer">
+            <p>Best regards,</p>
+            <p>AI Farming</p>
+        </div>
+    </div>
+</body>
+</html>

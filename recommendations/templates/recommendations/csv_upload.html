@@ -1,0 +1,476 @@
+{% extends 'recommendations/recommendations.html' %}
+{% block title %}CSV Upload & Export | AI Farming{% endblock %}
+{% block recommendations_content %}
+<style>
+  /* ✅ Ensure Upload & Export Sections Fit on Mobile */
+  .card {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* ✅ Ensure Buttons & Inputs are Full-Width */
+  .btn,
+  .form-select,
+  .form-control {
+    width: 100% !important;
+  }
+
+  /* ✅ Make Tables Scrollable on Small Screens */
+  .table-responsive {
+    overflow-x: auto !important;
+  }
+
+  /* ✅ Ensure Progress Bar Scales */
+  .progress {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* ✅ Prevent Text Overflow in Export Section */
+  .badge.bg-info {
+    white-space: normal !important;
+    word-break: break-word !important;
+    max-width: 100% !important;
+  }
+
+  /* ✅ Fix Modal for Small Screens */
+  .modal-dialog {
+    max-width: 90% !important;
+  }
+
+  /* ✅ Optimize Accordion for Mobile */
+  .accordion-button {
+    font-size: 1rem !important;
+    padding: 10px !important;
+  }
+</style>
+
+
+<main class="container-fluid my-3 px-2">
+
+  <!-- Page Header -->
+  <!-- Page Header -->
+  <header class="mb-3 text-center">
+    <h4 class="display-5">CSV Export & Upload & Task Monitoring</h4>
+  </header>
+
+
+  <!-- CSV Upload & Task Monitoring accordion -->
+  <!-- CSV Upload Section -->
+  <section class="card shadow-sm p-3 mb-4">
+    <h4 class="card-title mb-3">📤 Upload CSV</h4>
+
+    <!-- Drag & Drop Upload Zone -->
+    <div id="drop-zone" class="drop-zone text-center">
+      <p>📁 Drag & Drop CSV file here or <label for="csvFile" class="upload-label">Browse</label></p>
+      <input type="file" id="csvFile" accept=".csv" hidden>
+    </div>
+
+    <!-- File Name Display -->
+    <p id="file-name" class="text-muted mt-2"></p>
+
+    <!-- Preview CSV Table -->
+    <div id="preview-container" class="table-responsive mt-3"></div>
+
+    <!-- Upload Button -->
+    <button id="upload-btn" class="btn btn-success mt-3" disabled>📤 Upload CSV</button>
+
+    <!-- Progress Bar -->
+    <div id="upload-progress" class="progress mt-3 d-none">
+      <div id="progress-bar" class="progress-bar bg-primary" style="width: 0%;">0%</div>
+    </div>
+
+    <!-- Task Status Message -->
+    <p id="task-status" class="text-center mt-2"></p>
+
+    <!-- View Recommendations Button -->
+    <button id="view-recommendations" class="btn btn-primary w-100 mt-2 d-none">📊 View Recommendations</button>
+
+    <!-- Sample CSV Download -->
+    <button id="download-sample" class="btn btn-outline-secondary mt-2">⬇ Download Sample CSV</button>
+  </section>
+
+
+  <!-- CSV Export Accordion -->
+  <!-- CSV Export Section -->
+  <section class="card shadow-sm p-3 mb-4">
+    <h4 class="card-title mb-3">📂 Export Filtered CSV</h4>
+    <div class="accordion" id="exportCSVAccordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#exportCSVSection">
+            CSV Export Options
+          </button>
+        </h2>
+        <div id="exportCSVSection" class="accordion-collapse collapse">
+          <div class="accordion-body">
+            <div class="mb-2">
+              <label for="exportCrop" class="form-label">Crop:</label>
+              <select id="exportCrop" class="form-select">
+                <option value="">All Crops</option>
+              </select>
+            </div>
+            <div class="mb-2">
+              <label for="exportRisk" class="form-label">Risk Level:</label>
+              <select id="exportRisk" class="form-select">
+                <option value="">All Levels</option>
+                <option value="Low risk">🟢 Low</option>
+                <option value="Medium risk">🟡 Medium</option>
+                <option value="High risk">🔴 High</option>
+              </select>
+            </div>
+            <div class="mb-2">
+              <label for="exportDateRange" class="form-label">Date Range:</label>
+              <input type="text" id="exportDateRange" class="form-control" placeholder="Select date range" readonly>
+            </div>
+            <div class="d-grid gap-2">
+              <button class="btn btn-outline-secondary" type="button" onclick="clearExportFilters()">❌ Clear</button>
+              <button class="btn btn-success" type="button" onclick="exportFilteredCSV()">⬇ Export CSV</button>
+              <button class="btn btn-primary" type="button" onclick="previewExportData()">👀 Preview Export</button>
+            </div>
+            <!-- Container for export preview -->
+            <div id="exportPreviewContainer" class="table-responsive mt-3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Custom CSS -->
+<style>
+  .drop-zone {
+    border: 2px dashed #198754;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .drop-zone:hover {
+    background-color: rgba(25, 135, 84, 0.1);
+  }
+  .upload-label {
+    color: #198754;
+    cursor: pointer;
+    font-weight: bold;
+  }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+
+document.addEventListener("DOMContentLoaded", function () {
+  const token = sessionStorage.getItem("authToken");
+  const csrftoken = getCookie("csrftoken");
+  const filterRisk = document.getElementById("filterRisk");
+  const filterDateElem = document.getElementById("filterDate");
+  const downloadCSV = document.getElementById("downloadCSV");
+  // for upload
+  const dropZone = document.getElementById("drop-zone");
+  const fileInput = document.getElementById("csvFile");
+  const fileNameDisplay = document.getElementById("file-name");
+  const uploadBtn = document.getElementById("upload-btn");
+  const progressBar = document.getElementById("progress-bar");
+  const progressContainer = document.getElementById("upload-progress");
+  const taskStatus = document.getElementById("task-status");
+  const viewRecommendationsBtn = document.getElementById("view-recommendations");
+  const previewContainer = document.getElementById("preview-container");
+  const downloadSampleBtn = document.getElementById("download-sample");
+
+
+  let selectedFile = null;
+
+  // Also for export controls:
+  const exportCrop = document.getElementById("exportCrop");
+  const exportRisk = document.getElementById("exportRisk");
+  const exportDateRange = document.getElementById("exportDateRange");
+
+
+  // Initialize flatpickr for filter date range (table)
+  flatpickr("#filterDate", { mode: "range", dateFormat: "Y-m-d" });
+  // Initialize flatpickr for export date range
+  flatpickr("#exportDateRange", { mode: "range", dateFormat: "Y-m-d" });
+
+
+
+    // Populate crop options for both the recommendation form and export controls
+    function populateCropOptions(data) {
+      // data is now an object with a "crops" array
+      let crops = data.crops || [];
+      exportCrop.innerHTML = '<option value="">All Crops</option>';
+      crops.forEach(crop => {
+      const option = document.createElement("option");
+      option.value = crop;
+      option.textContent = crop;
+
+      const option3 = option.cloneNode(true);
+      exportCrop.appendChild(option3);
+      });
+       }
+  
+    // Fetch crops for dropdown
+    fetch("/recommendations/api/crops/", {
+      headers: { "Authorization": `Token ${token}` }
+    })
+    .then(response => response.json())
+    .then(data => {
+      populateCropOptions(data);
+    });
+
+// --- Export Functions ---
+
+// Build a query string from export controls:
+function buildExportQuery() {
+  let params = [];
+  const cropVal = exportCrop.value;
+  const riskVal = exportRisk.value;
+  const dateRange = exportDateRange.value;
+  if (cropVal) params.push("crop=" + encodeURIComponent(cropVal));
+  if (riskVal) params.push("risk=" + encodeURIComponent(riskVal));
+  if (dateRange) {
+    const dates = dateRange.split(" to ");
+    if (dates.length === 2) {
+      params.push("start_date=" + encodeURIComponent(dates[0]));
+      params.push("end_date=" + encodeURIComponent(dates[1]));
+    }
+  }
+  return params.join("&");
+}
+
+// Clear export filters
+window.clearExportFilters = function() {
+  exportCrop.value = "";
+  exportRisk.value = "";
+  exportDateRange.value = "";
+};
+
+
+// Export the CSV (full export)
+window.exportFilteredCSV = function() {
+  const queryString = buildExportQuery();
+  // Build the export URL
+  const url = "/recommendations/api/recommendations/export/?" + queryString;
+  console.log("Exporting CSV with URL:", url);
+  
+  // Use fetch to get the CSV as a blob and trigger download
+  fetch(url, {
+    method: "GET",
+    headers: { "Authorization": `Token ${token}` }
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Export failed");
+    return response.blob();
+  })
+  .then(blob => {
+    const csvURL = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = csvURL;
+    a.download = "recommendations_export.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(csvURL);
+  })
+  .catch(error => {
+    console.error("❌ Error exporting CSV:", error);
+    alert("❌ Failed to export CSV. Please try again.");
+  });
+};
+
+// Preview export data (fetch preview endpoint and show results)
+window.previewExportData = function() {
+  const queryString = buildExportQuery();
+  const url = "/recommendations/api/recommendations/export/preview/?" + queryString;
+  console.log("Previewing export data with URL:", url);
+  fetch(url, {
+    method: "GET",
+    headers: { "Authorization": `Token ${token}` }
+  })
+  .then(response => response.json())
+  .then(data => {
+    let previewHTML = "";
+    if (data.length === 0) {
+      previewHTML = "<p>No data found for the selected filters.</p>";
+    } else {
+      previewHTML = `<table class="table table-sm table-striped">
+        <thead>
+          <tr>
+            <th>Crop</th>
+            <th>Predicted Yield</th>
+            <th>Risk</th>
+            <th>Created At</th>
+          </tr>
+        </thead>
+        <tbody>`;
+      data.forEach(item => {
+        previewHTML += `<tr>
+          <td>${item.crop || "N/A"}</td>
+          <td>${item.predicted_yield || "N/A"}</td>
+          <td>${item.risk_assessment || "N/A"}</td>
+          <td>${new Date(item.created_at).toLocaleDateString()}</td>
+        </tr>`;
+      });
+      previewHTML += `</tbody></table>`;
+    }
+    document.getElementById("exportPreviewContainer").innerHTML = previewHTML;
+  })
+  .catch(error => {
+    console.error("❌ Error previewing export data:", error);
+    alert("❌ Failed to preview export data. Please try again.");
+  });
+};
+
+  viewRecommendationsBtn.addEventListener("click", function() {
+    // Redirect to the Manage Recommendations page
+    window.location.href = "{% url 'manage_recommendations' %}";
+  });
+
+  // Handle Drag & Drop
+  dropZone.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    dropZone.style.backgroundColor = "rgba(25, 135, 84, 0.2)";
+  });
+
+  dropZone.addEventListener("dragleave", () => {
+    dropZone.style.backgroundColor = "transparent";
+  });
+
+  dropZone.addEventListener("drop", (event) => {
+    event.preventDefault();
+    dropZone.style.backgroundColor = "transparent";
+
+    let files = event.dataTransfer.files;
+    if (files.length > 0) {
+      handleFileSelection(files[0]);
+    }
+  });
+
+  // Handle File Selection
+  fileInput.addEventListener("change", () => {
+    if (fileInput.files.length > 0) {
+      handleFileSelection(fileInput.files[0]);
+    }
+  });
+
+  function handleFileSelection(file) {
+    if (file.type !== "text/csv") {
+      alert("❌ Only CSV files are allowed.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("❌ File size must be less than 5MB.");
+      return;
+    }
+
+    selectedFile = file;
+    fileNameDisplay.textContent = `📂 Selected: ${file.name}`;
+    uploadBtn.disabled = false;
+
+    // Preview CSV
+    previewCSV(file);
+  }
+
+  function previewCSV(file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const rows = e.target.result.split("\n").slice(0, 6);
+      let tableHTML = "<table class='table table-sm table-bordered'><thead><tr>";
+
+      // Add headers
+      const headers = rows[0].split(",");
+      headers.forEach((header) => {
+        tableHTML += `<th>${header.trim()}</th>`;
+      });
+      tableHTML += "</tr></thead><tbody>";
+
+      // Add first 5 rows
+      for (let i = 1; i < rows.length; i++) {
+        const cells = rows[i].split(",");
+        tableHTML += "<tr>";
+        cells.forEach((cell) => {
+          tableHTML += `<td>${cell.trim()}</td>`;
+        });
+        tableHTML += "</tr>";
+      }
+      tableHTML += "</tbody></table>";
+
+      previewContainer.innerHTML = tableHTML;
+    };
+    reader.readAsText(file);
+  }
+
+  // Handle File Upload
+  uploadBtn.addEventListener("click", function () {
+    if (!selectedFile) return;
+
+    let formData = new FormData();
+    formData.append("file", selectedFile);
+
+    uploadBtn.disabled = true;
+    progressContainer.classList.remove("d-none");
+    taskStatus.textContent = "⏳ Uploading...";
+
+    fetch("/recommendations/api/upload/", {
+      method: "POST",
+      headers: {
+        "Authorization": `Token ${token}`,
+        "X-CSRFToken": csrftoken, // Add CSRF token here
+      },
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.task_id) {
+          pollTaskStatus(data.task_id);
+        } else {
+          throw new Error("Upload failed.");
+        }
+      })
+      .catch((error) => {
+        console.error("Upload error:", error);
+        taskStatus.textContent = "❌ Upload failed. Try again.";
+      });
+  });
+
+  function pollTaskStatus(taskId) {
+    let interval = setInterval(() => {
+      fetch(`/recommendations/task-status/${taskId}/`)
+        .then((response) => response.json())
+        .then((data) => {
+          progressBar.style.width = "100%";
+          progressBar.textContent = "Processing...";
+          if (data.status === "SUCCESS") {
+            clearInterval(interval);
+            taskStatus.textContent = "✅ Upload complete!";
+            viewRecommendationsBtn.classList.remove("d-none");
+          }
+        });
+    }, 3000);
+  }
+
+  downloadSampleBtn.addEventListener("click", function () {
+    window.location.href = "/recommendations/api/sample-csv/";
+  });
+
+// Function to get CSRF token from cookies
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let cookie of cookies) {
+          cookie = cookie.trim();
+          if (cookie.substring(0, name.length + 1) === (name + "=")) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+          }
+      }
+  }
+  return cookieValue;
+}
+});
+
+
+</script>
+{% endblock %}

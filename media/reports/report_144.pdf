@@ -1,0 +1,17 @@
+%PDF-1.4
+% Dummy PDF for ReportRequest 144
+Predictions: {'linear_regression': 16.09868519795142, 'decision_tree': 15.504256315384623}
+Crop Details: []
+Risk Assessment: ['✅ No major soil risks detected.']
+Mitigation Strategies: ['For strong winds, plant windbreak trees (e.g., poplars) or use cover crops to protect seedlings.']
+AI Alerts: ['🌦 Weather Risk: Strong winds detected - Consider windbreaks.']
+Next Best Action: 🌱 Next Best Action
+No recommended crops found.
+🔹 You mentioned a preference for ''. If conditions remain stable, you might still plant it, but be aware of yield/risk trade-offs.
+🔹 Companion Crops: Consider planting legumes for better nitrogen retention.
+
+Historical Weather: {'avg_max_temp': 29, 'avg_min_temp': 14, 'total_precip': 650, 'avg_wind_speed': 6, 'start_date': '2020-01-01', 'end_date': '2025-01-01'}
+Regional Average Yield: {'regional_avg': 13.0}
+User Data: {'location': 'Texas', 'latitude': 31.2638905, 'longitude': -98.5456116, 'soil_type': 'unknown', 'ph_level': 6, 'nitrogen': 43, 'moisture': 57, 'phosphorus': 0, 'potassium': 0, 'precipitation': 0.0, 'temperature_2m': 14.795000076293945, 'wind_speed': 5, 'crop_type': '', 'units': 'metric', 'irrigation_method': 'drip', 'additional_notes': '', 'measured_soil_temp': 27.4, 'weather_source': 'historical trends', 'wind_speed_10m': 25.623300552368164, 'relative_humidity_2m': 35.0, 'predicted_soil_temp': 15.5}
+Future Climate: {'30_days': 15.6, '60_days': 14.2, '90_days': 15.8}
+Rotation Plan: No rotation plan available (no recommended crops).

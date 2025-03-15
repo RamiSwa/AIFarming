@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Page Title & Intro -->
+    <div class="row mb-4">
+        <div class="col text-center">
+            <h1 class="mb-3">Contact Us</h1>
+            <p>Need help? Fill out our contact form or reach out to us directly.</p>
+        </div>
+    </div>
+
+    <div class="row g-4 align-items-start">
+        <!-- Left Column: Contact Details -->
+        <div class="col-md-6">
+            <h3 class="mb-3">Contact Details</h3>
+            <p class="mb-2">
+                <strong>Email:</strong> {{ contact_info.email }}
+            </p>
+
+            {% if contact_info.whatsapp_number %}
+                <p class="mb-0">
+                    <strong>WhatsApp:</strong>
+                    <a href="{{ contact_info.get_whatsapp_link }}" target="_blank" class="whatsapp-link">
+                        Chat with us on WhatsApp
+                    </a>
+                </p>
+            {% endif %}
+        </div>
+
+        <!-- Right Column: Contact Form -->
+        <div class="col-md-6">
+            <h3 class="mb-3">Send a Message</h3>
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- Name Field -->
+                <div class="mb-3">
+                    <label for="id_name" class="form-label">Your Name</label>
+                    <div class="input-group">
+                        <span class="input-group-text px-3">👤</span>
+                        <input 
+                            type="text" 
+                            name="name" 
+                            id="id_name" 
+                            class="form-control" 
+                            placeholder="Your Name" 
+                            required
+                        >
+                    </div>
+                </div>
+
+                <!-- Email Field -->
+                <div class="mb-3">
+                    <label for="id_email" class="form-label">Your Email</label>
+                    <div class="input-group">
+                        <span class="input-group-text px-3">📧</span>
+                        <input 
+                            type="email" 
+                            name="email" 
+                            id="id_email" 
+                            class="form-control" 
+                            placeholder="Your Email" 
+                            required
+                        >
+                    </div>
+                </div>
+
+                <!-- Subject Field -->
+                <div class="mb-3">
+                    <label for="id_subject" class="form-label">Subject</label>
+                    <div class="input-group">
+                        <span class="input-group-text px-3">✏️</span>
+                        <input 
+                            type="text" 
+                            name="subject" 
+                            id="id_subject" 
+                            class="form-control" 
+                            placeholder="Subject" 
+                            required
+                        >
+                    </div>
+                </div>
+
+                <!-- Message Field -->
+                <div class="mb-3">
+                    <label for="id_message" class="form-label">Message</label>
+                    <div class="input-group">
+                        <span class="input-group-text px-3">💬</span>
+                        <textarea 
+                            name="message" 
+                            id="id_message" 
+                            class="form-control" 
+                            rows="4" 
+                            placeholder="Your Message" 
+                            required
+                        ></textarea>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        Send Message
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+    /* WhatsApp Link Hover Effect */
+    .whatsapp-link {
+        text-decoration: none;
+        color: #25D366; /* WhatsApp Green */
+        font-weight: bold;
+    }
+    .whatsapp-link:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}

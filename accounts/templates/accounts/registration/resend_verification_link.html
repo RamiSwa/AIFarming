@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Resend Verification Link{% endblock %}
+
+{% block content %}
+<div class="container mt-5 text-center">
+    <h2>Resend Email Verification</h2>
+    <p>If you didn't receive the verification email, enter your email below to resend it.</p>
+    
+    <form method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+            <input type="email" class="form-control" name="email" placeholder="Enter your email" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Resend Email</button>
+    </form>
+</div>
+{% endblock %}

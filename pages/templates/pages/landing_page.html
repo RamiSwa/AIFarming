@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+body {
+    font-family: 'Roboto', sans-serif;
+}
+
+/* Custom Styles for Landing Page */
+
+/* 1️⃣ HERO SECTION: Ensure the image is aligned properly */
+.hero-section {
+    background-size: cover;
+    background-position: center; /* Ensures the image is centered */
+    position: relative;
+    padding: 120px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.hero-section .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+}
+.hero-section .container {
+    position: relative;
+    z-index: 2;
+}
+.hero-section h1 {
+    font-size: 3rem;  /* Bigger text */
+    font-weight: bold;
+    text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.7);
+}
+.hero-section p {
+    text-shadow: 1px 1px 5px rgba(0,0,0,0.6);
+}
+
+/* 2️⃣ HOW IT WORKS SECTION: Reduce card separation */
+.how-it-works .card {
+    margin-bottom: -10px;
+}
+
+.card {
+    transition: transform 0.3s, box-shadow 0.3s;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.6s forwards;
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+}
+.hero-section .btn {
+    padding: 12px 24px;
+    font-size: 1.2rem;
+    box-shadow: 0px 4px 10px rgba(0, 255, 0, 0.5);
+}
+
+.btn-rounded {
+    border-radius: 50px;
+    transition: background 0.3s, transform 0.3s;
+}
+.btn-rounded:hover {
+    transform: scale(1.05);
+}
+.section-title {
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+/* 5️⃣ Newsletter Section Background: New gradient background */
+.bg-farm-gradient {
+    background: linear-gradient(45deg, #2ecc71, #27ae60);
+    color: #fff;
+}
+
+.rounded {
+    border-radius: 0.5rem;
+}
+
+/* 3️⃣ FEATURES SECTION: Increase text size for better readability */
+.features-section .card h5 {
+    font-size: 1.5rem;
+}
+.features-section .card p {
+    font-size: 1.1rem;
+}
+.features h5 {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+.btn-order-now {
+    box-shadow: 0px 4px 10px rgba(0, 128, 0, 0.3);
+}
+
+/* Fade In Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* FAQ Accordion Customization */
+/* 4️⃣ FAQ Section: Boost text contrast */
+.accordion-button:not(.collapsed) {
+    color: #2575fc;
+    background-color: #e7f1ff;
+}
+.accordion-body {
+    color: #333;
+}
+.faq-section {
+    background: rgba(0, 123, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.newsletter-section {
+    background: linear-gradient(45deg, #28a745, #218838);
+    color: white;
+    padding: 20px;
+}
+
+/* Responsive Design Adjustments */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 80px 0;
+    }
+    .hero-section h1 {
+        font-size: 2.5rem;
+    }
+    .hero-section p {
+        font-size: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<main>
+    <!-- HERO SECTION -->
+    <header class="hero-section text-center" style="background: url('{{ landing_page.hero_image.url }}') no-repeat;">
+        <div class="overlay"></div>
+        <div class="container">
+            <h1>{{ landing_page.tagline }} 🌾</h1>
+            <p>{{ landing_page.call_to_action }}.</p>
+            <a href="{% url 'recommendations_page' %}" class="btn btn-primary btn-lg fw-bold btn-rounded shadow-lg mb-3"
+               aria-label="Get Started with Agriculture AI">
+               🌱 Get Started
+            </a>
+        </div>
+    </header>
+
+    <!-- HOW IT WORKS SECTION -->
+    <section class="container text-center mt-5 how-it-works" aria-labelledby="how-it-works-title">
+        <h2 id="how-it-works-title" class="section-title text-primary">🚀 How It Works</h2>
+        <div class="row mt-4">
+            {% for step in landing_page.steps.all %}
+            <article class="col-md-4 mb-4">
+                <div class="card shadow p-4 border-{{ step.border_color }} h-100">
+                    <h5 class="text-{{ step.border_color }}">{{ step.icon }} {{ step.title }}</h5>
+                    <p class="text-muted">{{ step.description }}</p>
+                </div>
+            </article>
+            {% empty %}
+                <p class="text-center">No steps available yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- FEATURES SECTION -->
+    <section class="container mt-5 features-section" aria-labelledby="features-title">
+        <h2 id="features-title" class="section-title text-center text-success">🌱 Features</h2>
+        <div class="row mt-4">
+            {% for feature in landing_page.features.all %}
+            <article class="col-md-4 mb-4">
+                <div class="card shadow-lg p-3 border-info h-100">
+                    <div class="card-body">
+                        <h5 class="text-info">✅ {{ feature.title }}</h5>
+                        <p class="text-muted">{{ feature.description|truncatewords:20 }}</p>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0 text-center">
+                        <!-- Added an id to the trigger button for identification -->
+                        <button id="featureModalTrigger{{ forloop.counter }}" type="button" class="btn btn-outline-primary fw-bold" data-bs-toggle="modal" data-bs-target="#featureModal{{ forloop.counter }}">
+                            Learn More →
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- MODAL for Feature Details -->
+            <div class="modal fade" id="featureModal{{ forloop.counter }}" tabindex="-1" aria-labelledby="featureModalLabel{{ forloop.counter }}" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title text-info" id="featureModalLabel{{ forloop.counter }}">✅ {{ feature.title }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-muted">{{ feature.description }}</p>
+                            <hr>
+                            <p>🌱 <strong>Want to see it in action?</strong></p>
+                            <a href="{% url 'recommendations_page' %}" class="btn btn-success fw-bold">Get AI Insights Now →</a>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+                <p class="text-center">No features added yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS SECTION -->
+    <section class="container mt-5 bg-light p-5 rounded" aria-labelledby="testimonials-title">
+        <h2 id="testimonials-title" class="section-title text-center">💬 What Our Users Say</h2>
+        <div class="row mt-4">
+            {% for testimonial in testimonials %}
+            <article class="col-md-4 mb-4">
+                <div class="card shadow p-3 text-center h-100">
+                    <div class="card-body">
+                        <img src="{{ testimonial.get_image_url }}" class="rounded-circle mb-3" width="80" height="80"
+                             alt="Profile picture of {{ testimonial.name }}" loading="lazy">
+                        <p class="fst-italic">"{{ testimonial.message }}"</p>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0">
+                        <footer class="blockquote-footer">
+                            {{ testimonial.name }} <cite title="User role">{{ testimonial.role }}</cite>
+                        </footer>
+                    </div>
+                </div>
+            </article>
+            {% empty %}
+                <p class="text-center">No testimonials yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- PAID REPORTS SECTION WITH DYNAMIC PRICING -->
+    <section class="container text-center mt-5 py-5 bg-gradient rounded" aria-labelledby="reports-title">
+        <h2 id="reports-title" class="section-title">📊 Get Your AI Soil Report</h2>
+        
+        {% if subscription_plans %}
+            <p class="lead fw-bold">Choose a plan that fits your needs:</p>
+            <div class="row justify-content-center">
+                {% for plan in subscription_plans %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card shadow-lg p-3 border-info">
+                            <h4 class="fw-bold">{{ plan.name }}</h4>
+                            <p class="text-muted">{{ plan.description }}</p>
+                            <p class="text-success fw-bold">${{ plan.price }} / {{ plan.get_duration_display }}</p>
+                            <a href="{% url 'subscription_pricing' %}" class="btn btn-lg btn-success fw-bold">🚀 Choose Plan</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="lead fw-bold">For just <span class="text-danger">$10</span>, receive an AI-driven soil report with insights tailored to your farm.</p>
+            <a href="{% url 'subscription_pricing' %}" class="btn btn-lg btn-success fw-bold btn-rounded shadow-lg btn-order-now" aria-label="Order your AI Soil Report">🚀 Order Now</a>
+        {% endif %}
+    </section>
+
+    <!-- COUPON DISPLAY IF AVAILABLE -->
+    {% if available_coupons %}
+    <section class="container text-center mt-4">
+        <div class="alert alert-info">
+            <h5 class="fw-bold">🎉 Limited-Time Offer!</h5>
+            <p>Use the following coupon codes to get a discount on the One-Time Report:</p>
+            <ul class="list-unstyled">
+                {% for coupon in available_coupons %}
+                    <li><strong>{{ coupon.code }}</strong> - {{ coupon.discount_percent }}% off (Valid until {{ coupon.valid_to|date:"M d, Y" }}) </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- DONATION SECTION -->
+    <section class="container text-center mt-5 py-4 bg-light rounded" aria-labelledby="donation-title">
+        <h2 id="donation-title" class="section-title">🤝 Support AI Farming Research</h2>
+        <p>Your contributions help improve AI-driven farming solutions.</p>
+        <a href="{% url 'donation_page' %}" class="btn btn-warning btn-lg fw-bold">❤️ Contribute Now</a>
+    </section>
+
+    <!-- FAQ SECTION -->
+    <section class="container mt-5" aria-labelledby="faq-title">
+        <h2 id="faq-title" class="section-title text-center text-info">❓ Frequently Asked Questions</h2>
+        <div class="accordion mt-4" id="faqAccordion">
+            {% for faq in faqs %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="faqHeading{{ forloop.counter }}">
+                    <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" 
+                            type="button" 
+                            data-bs-toggle="collapse" 
+                            data-bs-target="#faqCollapse{{ forloop.counter }}" 
+                            aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" 
+                            aria-controls="faqCollapse{{ forloop.counter }}">
+                        {{ faq.icon }} {{ faq.question }}
+                    </button>
+                </h2>
+                <div id="faqCollapse{{ forloop.counter }}" 
+                     class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" 
+                     aria-labelledby="faqHeading{{ forloop.counter }}" 
+                     data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        {{ faq.answer|safe }}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+                <p class="text-center">No FAQs available yet.</p>
+            {% endfor %}
+
+            <p class="text-center mt-3">
+                ❓ <strong>Still have questions?</strong> <a href="{% url 'contact_page' %}" class="fw-bold text-primary">Contact us!</a>
+            </p>
+        </div>
+    </section>
+
+    <!-- NEWSLETTER SIGN-UP SECTION -->
+    <section class="container text-center mt-5 py-5 bg-farm-gradient rounded" aria-labelledby="newsletter-title">
+        <h2 id="newsletter-title" class="section-title">Stay Updated</h2>
+        <p class="lead">Subscribe to our newsletter for the latest updates in AI-driven agriculture.</p>
+        <form action="{% url 'subscribe' %}" method="POST" class="d-flex justify-content-center">
+            {% csrf_token %}
+            <input type="email" name="email" class="form-control w-50 me-2" placeholder="Enter your email" required aria-label="Email address">
+            <button type="submit" class="btn btn-light btn-rounded">Subscribe</button>
+        </form>
+    </section>
+
+    <!-- Global Script for Modal Focus Management -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var modals = document.querySelectorAll('.modal');
+        modals.forEach(function(modal) {
+          // Before the modal hides, blur any focused element inside it
+          modal.addEventListener('hide.bs.modal', function() {
+            if (modal.contains(document.activeElement)) {
+              document.activeElement.blur();
+            }
+          });
+          // After the modal has hidden, return focus to the trigger button
+          modal.addEventListener('hidden.bs.modal', function () {
+            var triggerButton = document.querySelector('[data-bs-target="#' + modal.id + '"]');
+            if (triggerButton) {
+              // Use a short timeout to ensure the modal is fully hidden
+              setTimeout(function() {
+                triggerButton.focus();
+              }, 50);
+            }
+          });
+        });
+      });
+    </script>
+
+</main>
+{% endblock %}

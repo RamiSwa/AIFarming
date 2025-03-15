@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Order Confirmation{% endblock %}
+
+{% block content %}
+<div class="container my-5 text-center">
+  <div class="card shadow-lg p-4 mx-auto" style="max-width: 600px; border-radius: 10px;">
+    {% if error %}
+      <div class="alert alert-danger mt-3">❌ {{ error }}</div>
+    {% else %}
+      {% if report_url %}
+        <!-- One-Time Payment: Report Generated -->
+        <h1 class="fw-bold text-success">✅ Your AI Soil Report is Ready!</h1>
+        <p class="lead mt-3">Your detailed soil report has been successfully generated and emailed to you.</p>
+        <p class="text-muted">You can also download your report using the button below.</p>
+        <div class="mt-4">
+          <a href="{{ report_url }}" class="btn btn-success btn-lg" target="_blank" rel="noopener noreferrer">📥 Download Your Report</a>
+        </div>
+      {% else %}
+        <!-- Subscription (or other non-report order): No report generated yet -->
+        <h1 class="fw-bold text-success">Your Order is Confirmed!</h1>
+        <p class="lead mt-3">Your subscription has been activated and an order confirmation has been sent to your email.</p>
+        <p class="text-muted">You can generate your AI Soil Report anytime from your dashboard.</p>
+      {% endif %}
+    {% endif %}
+  </div>
+  
+  <div class="mt-4">
+    <a href="{% url 'landing_page' %}" class="btn btn-secondary">🏠 Back to Home</a>
+  </div>
+</div>
+{% endblock %}

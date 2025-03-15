@@ -1,0 +1,13 @@
+name,crop_type,min_temp,max_temp,min_soil_temp,max_soil_temp,min_pH,max_pH,min_moisture,max_moisture,max_precipitation,min_nitrogen,max_nitrogen,min_phosphorus,max_phosphorus,min_potassium,max_potassium,preferred_growing_season,suitable_soil_types
+Wheat,Grain,10,30,12,25,5.5,7.5,20,80,50,30,80,20,50,30,90,"[3, 4, 5, 9, 10]",Loam
+Corn,Grain,10,35,15,30,5.8,7,30,85,60,50,120,40,80,50,110,"[4, 5, 6, 7, 8]","Loam, Sandy"
+Soybean,Legume,15,32,14,28,6,7,30,70,60,20,80,15,50,25,90,"[5, 6, 7, 8]","Loam, Silt"
+Rice,Grain,12,35,15,32,5.5,7.5,60,100,80,60,150,30,70,40,120,"[6, 7, 8, 9]","Clay, Loam"
+Barley,Grain,5,25,8,20,6,7.5,15,70,40,30,80,20,50,30,90,"[2, 3, 4, 9, 10]","Loam, Chalk"
+Tomato,Vegetable,15,30,18,28,5.5,7.5,40,85,70,40,100,20,60,35,100,"[3, 4, 5, 6, 7, 8]","Loam, Sandy"
+Carrot,Root Vegetable,5,25,8,18,5.8,7,20,75,50,30,70,15,50,25,80,"[2, 3, 4, 5, 9, 10]","Sandy, Silt"
+Potato,Root Vegetable,10,28,12,25,5.2,6.5,30,80,50,40,100,30,60,40,90,"[3, 4, 5, 9, 10]","Loam, Sandy"
+Peanut,Legume,15,35,18,32,5.5,7.5,30,70,60,20,60,15,40,20,80,"[4, 5, 6, 7]",Sandy
+Cotton,Fiber,20,38,22,35,5,7.5,20,80,50,30,80,15,50,30,90,"[4, 5, 6, 7, 8]","Loam, Sandy"
+Grapes,Fruit,15,35,16,30,5.5,7,10,60,40,20,50,10,40,15,70,"[3, 4, 5, 6, 9, 10]","Loam, Chalk"
+Banana,Fruit,18,38,20,35,5.5,7.5,70,100,150,50,120,40,80,50,110,"[6, 7, 8, 9, 10, 11]","Loam, Peat"

@@ -1,0 +1,409 @@
+{% extends 'recommendations/recommendations.html' %}
+{% block recommendations_content %}
+
+<!-- Inline CSS for mobile adjustments -->
+<style>
+  /* Ensure inputs and selects span full width */
+  .form-select {
+    max-width: 100%; /* Ensures dropdown doesn't exceed container width */
+    white-space: normal; /* Allows text to wrap */
+    word-wrap: break-word; /* Ensures long text wraps properly */
+    overflow: hidden; /* Prevents overflow */
+}
+
+  /* Ensure option text wraps instead of expanding off-screen */
+  .form-select option {
+    white-space: normal;
+    word-break: break-word;
+  }
+</style>
+
+<main class="container-fluid my-3 px-2">
+  <!-- Page Header -->
+  <header class="mb-3 text-center">
+    <h3 class="display-5">🌱 Fetch AI Results | AI Farming</h3>
+    <p class="text-muted">Enter crop and location to get AI predictions.</p>
+  </header>
+
+  <!-- Success Alert (Hidden by Default) -->
+  <div id="success-alert" class="alert alert-success d-none text-center mx-auto w-100 mb-3">
+    ✅ Recommendation saved successfully!
+  </div>
+
+  <!-- AI Crop Recommendation Form -->
+  <section class="card shadow-sm p-3 mb-4">
+    <h4 class="card-title mb-3">Get AI Crop Recommendation</h4>
+    <form id="recommendation-form">
+      <div class="row g-3">
+        <div class="col-12 col-md-4">
+          <label for="crop" class="form-label">Select Crop</label>
+<select id="crop" class="form-select" aria-label="Select Crop" data-bs-container="body"></select>
+        </div>
+        <div class="col-12 col-md-4">
+          <label for="latitude" class="form-label">Latitude</label>
+          <input type="number" id="latitude" class="form-control" step="any" placeholder="e.g. 34.0522" aria-label="Latitude">
+        </div>
+        <div class="col-12 col-md-4">
+          <label for="longitude" class="form-label">Longitude</label>
+          <input type="number" id="longitude" class="form-control" step="any" placeholder="e.g. -118.2437" aria-label="Longitude">
+        </div>
+      </div>
+      <div class="d-flex justify-content-end mt-3">
+        <button type="submit" class="btn btn-primary">
+          Get Recommendation
+          <span class="spinner-border spinner-border-sm d-none" id="loading-spinner" role="status" aria-hidden="true"></span>
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Recommendation Results -->
+  <section id="recommendation-results" class="card shadow-sm p-3 mb-4 d-none">
+    <h4 class="card-title mb-3">Recommendation Results</h4>
+    <div class="row">
+      <div class="col-12 col-md-6">
+        <p><strong>🌾 Crop:</strong> <span id="crop-name"></span></p>
+        <p><strong>Predicted Soil Temp:</strong> <span id="predicted-soil-temp"></span>°C</p>
+        <p>
+          <strong>Risk Assessment:</strong> 
+          <span class="badge" id="risk-assessment"></span>
+        </p>
+        <p><strong>Predicted Yield:</strong> <span id="predicted-yield"></span></p>
+        <p><strong>Expected Yield:</strong> <span id="expected-yield"></span></p>
+        <p><strong>Optimal Planting Time:</strong> <span id="planting-time"></span></p>
+        <p><strong>Weather Summary:</strong> <span id="weather-summary"></span></p>
+        <p>
+          <strong>AI Model Version:</strong> 
+          <span class="badge bg-info" id="ai-model-version" style="white-space: normal; word-break: break-word;"></span>
+        </p>
+      </div>
+      <div class="col-12 col-md-6">
+        <h5>🚀 Next Best Action:</h5>
+        <p id="next-best-action" class="alert alert-warning text-center fw-bold"></p>
+      </div>
+    </div>
+
+    <!-- Additional Details Accordion -->
+    <div class="accordion mt-3" id="recommendationAccordion">
+      <!-- (Accordion items remain unchanged) -->
+      <!-- Yield Analysis -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="yieldAnalysisHeading">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#yieldAnalysis" aria-expanded="false" aria-controls="yieldAnalysis">
+            📊 Yield Analysis
+          </button>
+        </h2>
+        <div id="yieldAnalysis" class="accordion-collapse collapse" aria-labelledby="yieldAnalysisHeading" data-bs-parent="#recommendationAccordion">
+          <div class="accordion-body">
+            <ul class="list-group">
+              <li class="list-group-item"><strong>Soil Temperature:</strong> <span id="yield-analysis-soil-temp"></span>°C</li>
+              <li class="list-group-item"><strong>Yield Prediction:</strong> <span id="yield-analysis-yield-prediction"></span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- Yield Explanation -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="yieldExplanationHeading">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#yieldExplanation" aria-expanded="false" aria-controls="yieldExplanation">
+            📊 Yield Explanation
+          </button>
+        </h2>
+        <div id="yieldExplanation" class="accordion-collapse collapse" aria-labelledby="yieldExplanationHeading" data-bs-parent="#recommendationAccordion">
+          <div class="accordion-body">
+            <ul id="yield-explanation" class="list-group"></ul>
+          </div>
+        </div>
+      </div>
+      <!-- Mitigation Suggestions -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="mitigationSuggestionsHeading">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#mitigationSuggestions" aria-expanded="false" aria-controls="mitigationSuggestions">
+            💡 Mitigation Suggestions
+          </button>
+        </h2>
+        <div id="mitigationSuggestions" class="accordion-collapse collapse" aria-labelledby="mitigationSuggestionsHeading" data-bs-parent="#recommendationAccordion">
+          <div class="accordion-body" id="mitigation-suggestions"></div>
+        </div>
+      </div>
+      <!-- Historical Trends -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="historicalTrendsHeading">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#historicalTrends" aria-expanded="false" aria-controls="historicalTrends">
+            📈 Historical Trends
+          </button>
+        </h2>
+        <div id="historicalTrends" class="accordion-collapse collapse" aria-labelledby="historicalTrendsHeading" data-bs-parent="#recommendationAccordion">
+          <div class="accordion-body">
+            <ul id="historical-trends" class="list-group"></ul>
+          </div>
+        </div>
+      </div>
+      <!-- Alerts -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="alertsHeading">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#alertsCollapse" aria-expanded="false" aria-controls="alertsCollapse">
+            ⚠ Alerts
+          </button>
+        </h2>
+        <div id="alertsCollapse" class="accordion-collapse collapse" aria-labelledby="alertsHeading" data-bs-parent="#recommendationAccordion">
+          <div class="accordion-body">
+            <ul id="alerts" class="list-group"></ul>
+          </div>
+        </div>
+      </div>
+      <!-- Alternative Farming Advice -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="alternativeAdviceHeading">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#alternativeAdvice" aria-expanded="false" aria-controls="alternativeAdvice">
+            🌱 Alternative Farming Advice
+          </button>
+        </h2>
+        <div id="alternativeAdvice" class="accordion-collapse collapse" aria-labelledby="alternativeAdviceHeading" data-bs-parent="#recommendationAccordion">
+          <div class="accordion-body">
+            <ul id="alternative-farming-advice" class="list-group"></ul>
+          </div>
+        </div>
+      </div>
+      <!-- Recommended Crops -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="recommendedCropsHeading">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#recommendedCrops" aria-expanded="false" aria-controls="recommendedCrops">
+            🌾 Alternative Recommended Crops
+          </button>
+        </h2>
+        <div id="recommendedCrops" class="accordion-collapse collapse" aria-labelledby="recommendedCropsHeading" data-bs-parent="#recommendationAccordion">
+          <div class="accordion-body" id="recommended-crops-list"></div>
+        </div>
+      </div>
+    </div>       
+  </section>
+  
+  <!-- View Recommendation Modal -->
+  <div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-fullscreen-sm-down">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="viewModalLabel">Recommendation Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+{% block extra_js %}
+<script>
+// JavaScript for handling the recommendation form submission and DOM updates remains unchanged.
+document.addEventListener("DOMContentLoaded", function () {
+    const token = sessionStorage.getItem("authToken");
+    const csrftoken = getCookie("csrftoken");
+    const cropSelect = document.getElementById("crop");
+    let currentRecommendationData = null;
+
+    // Initialize flatpickr for date ranges if needed
+    flatpickr("#filterDate", { mode: "range", dateFormat: "Y-m-d" });
+    flatpickr("#exportDateRange", { mode: "range", dateFormat: "Y-m-d" });
+
+    function createListItem(text, extraClasses = "") {
+      const li = document.createElement("li");
+      li.textContent = text;
+      li.className = `list-group-item ${extraClasses}`;
+      return li;
+    }
+
+    function createSuggestionCard(suggestion) {
+      const card = document.createElement("div");
+      card.className = "card text-success border-success mb-2";
+      card.innerHTML = `<div class="card-body">✅ ${suggestion}</div>`;
+      return card;
+    }
+
+    function populateCropOptions(data) {
+      let crops = data.crops || [];
+      cropSelect.innerHTML = '<option value="">Select Crop</option>';
+      crops.forEach(crop => {
+        const option = document.createElement("option");
+        option.value = crop;
+        option.textContent = crop;
+        cropSelect.appendChild(option);
+      });
+    }
+
+    // Fetch crops for dropdown
+    fetch("/recommendations/api/crops/", {
+        headers: { "Authorization": `Token ${token}` }
+      })
+      .then(response => response.json())
+      .then(data => {
+        populateCropOptions(data);
+      });
+
+    function showSuccessAlert() {
+        const alertBox = document.getElementById("success-alert");
+        if (!alertBox) return;
+        alertBox.classList.remove("d-none");
+        setTimeout(() => {
+            alertBox.classList.add("d-none");
+        }, 3000);
+    }
+
+    document.getElementById("recommendation-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        document.getElementById("loading-spinner").classList.remove("d-none");
+
+        const crop = document.getElementById("crop").value;
+        const latitude = document.getElementById("latitude").value.trim();
+        const longitude = document.getElementById("longitude").value.trim();
+
+        let formData = { crop };
+        if (latitude !== "" && longitude !== "") {
+            formData.latitude = parseFloat(latitude);
+            formData.longitude = parseFloat(longitude);
+        }
+
+        fetch("/recommendations/api/predict/", {
+            method: "POST",
+            headers: {
+                "Authorization": `Token ${token}`,
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrftoken
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "error") {
+                alert(`API Error: ${data.message}`);
+                return;
+            }
+
+            currentRecommendationData = data.recommendation;
+            showSuccessAlert();
+
+            document.getElementById("crop-name").textContent =
+                data.recommendation.crop || "Not Available";
+            document.getElementById("predicted-soil-temp").textContent = parseFloat(data.predicted_soil_temp).toFixed(2);
+            const riskEl = document.getElementById("risk-assessment");
+            riskEl.textContent = data.risk_assessment;
+            riskEl.className = data.risk_assessment === "Low risk" ? "badge bg-success" :
+                                data.risk_assessment === "Medium risk" ? "badge bg-warning" :
+                                "badge bg-danger";
+            document.getElementById("predicted-yield").textContent = parseFloat(data.predicted_yield).toFixed(2);
+            document.getElementById("expected-yield").textContent = parseFloat(data.recommendation.expected_yield).toFixed(2);
+            document.getElementById("planting-time").textContent = data.recommendation.optimal_planting_time || "Not Available";
+            document.getElementById("weather-summary").textContent = data.weather_summary || "No weather summary available.";
+
+            const modelVersions = data.recommendation.ai_model_version;
+            let modelObj = null;
+            if (modelVersions) {
+              if (typeof modelVersions === 'string') {
+                try {
+                  modelObj = JSON.parse(modelVersions);
+                } catch (e) {
+                  console.error("Failed to parse ai_model_version:", e);
+                  modelObj = null;
+                }
+              } else if (typeof modelVersions === 'object') {
+                modelObj = modelVersions;
+              }
+            }
+            if (modelObj) {
+              const formattedVersions = Object.entries(modelObj)
+                .map(([key, value]) => {
+                  const titleCaseKey = key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                  return `${titleCaseKey}: ${value}`;
+                })
+                .join(' | ');
+              document.getElementById("ai-model-version").textContent = formattedVersions;
+            } else {
+              document.getElementById("ai-model-version").textContent = "Unknown";
+            }
+
+            document.getElementById("yield-analysis-soil-temp").textContent = parseFloat(data.predicted_soil_temp).toFixed(2);
+            document.getElementById("yield-analysis-yield-prediction").textContent = parseFloat(data.predicted_yield).toFixed(2);
+
+            const nextBestActionElement = document.getElementById("next-best-action");
+            nextBestActionElement.textContent = data.next_best_action || "No suggested action.";
+            nextBestActionElement.style.color = "#dc3545";
+            nextBestActionElement.style.fontWeight = "bold";
+
+            const cropList = document.getElementById("recommended-crops-list");
+            cropList.innerHTML = "";
+            if (data.recommendation.recommended_crops && data.recommendation.recommended_crops.crops.length > 0) {
+                data.recommendation.recommended_crops.crops.forEach(crop => {
+                    const badge = document.createElement("span");
+                    badge.className = "badge bg-primary m-1";
+                    badge.textContent = crop;
+                    cropList.appendChild(badge);
+                });
+            } else {
+                cropList.innerHTML = "<span class='text-muted'>No alternative crops found.</span>";
+            }
+
+            const yieldExplanationList = document.getElementById("yield-explanation");
+            yieldExplanationList.innerHTML = "";
+            data.yield_explanation.forEach(explanation => {
+                yieldExplanationList.appendChild(createListItem(explanation));
+            });
+
+            const mitigationList = document.getElementById("mitigation-suggestions");
+            mitigationList.innerHTML = "";
+            data.mitigation_suggestions.forEach(suggestion => {
+                mitigationList.appendChild(createSuggestionCard(suggestion));
+            });
+
+            const historicalList = document.getElementById("historical-trends");
+            historicalList.innerHTML = "";
+            data.historical_trends.forEach(trend => {
+                historicalList.appendChild(createListItem(`📈 ${trend}`));
+            });
+
+            const alertsList = document.getElementById("alerts");
+            alertsList.innerHTML = "";
+            data.alerts.forEach(alertMsg => {
+                const li = createListItem(alertMsg, "alert alert-danger fw-bold");
+                li.innerHTML = `<span class="badge bg-danger">⚠</span> ${alertMsg}`;
+                alertsList.appendChild(li);
+            });
+
+            const farmingAdviceList = document.getElementById("alternative-farming-advice");
+            farmingAdviceList.innerHTML = "";
+            if (data.alternative_farming_advice && data.alternative_farming_advice.length > 0) {
+                data.alternative_farming_advice.forEach(advice => {
+                    farmingAdviceList.appendChild(createListItem(advice));
+                });
+            } else {
+                farmingAdviceList.innerHTML = "<li class='text-muted list-group-item'>No alternative farming advice available.</li>";
+            }
+
+            document.getElementById("recommendation-results").classList.remove("d-none");
+            document.getElementById("loading-spinner").classList.add("d-none");
+        })
+        .catch(error => {
+            console.error("Fetch Failed:", error);
+            alert("An error occurred. Please try again.");
+            document.getElementById("loading-spinner").classList.add("d-none");
+        });
+    });
+});
+
+// Function to get CSRF token from cookies
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let cookie of cookies) {
+          cookie = cookie.trim();
+          if (cookie.substring(0, name.length + 1) === (name + "=")) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+          }
+      }
+  }
+  return cookieValue;
+}
+</script>
+{% endblock extra_js %}
+{% endblock recommendations_content %}

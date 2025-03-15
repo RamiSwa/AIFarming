@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+
+{% block title %}Weather Forecast - AI Farming{% endblock %}
+
+{% block content %}
+<main class="container-fluid p-0">
+  <!-- Hero Section -->
+  <section class="hero d-flex align-items-center justify-content-center text-center">
+    <div class="hero-overlay"></div>
+    <div class="hero-content text-white">
+      <h1 class="display-2 fw-bold">AI Farming Weather</h1>
+      <p class="lead">Real-time weather forecasts to optimize your crop planning</p>
+      <a href="#forecastSection" class="btn btn-lg btn-primary mt-3">Get Started</a>
+    </div>
+  </section>
+
+  <!-- Forecast Section -->
+  <section id="forecastSection" class="container my-5">
+    <!-- Location Selection Section -->
+    <div class="card p-4 shadow-sm mb-4">
+      <h5 class="card-title">Select Location</h5>
+      <div class="input-group">
+        <label for="forecastLocationInput" class="visually-hidden">City Name</label>
+        <input type="text" id="forecastLocationInput" class="form-control" placeholder="Enter a city name (e.g., New York)" aria-label="City Name">
+        <button id="fetchForecastBtn" class="btn btn-primary">Get Forecast</button>
+        <button id="useMyLocationBtn" class="btn btn-outline-secondary">Use My Location</button>
+      </div>
+      <!-- Temperature Unit Toggle -->
+      <div class="btn-group mt-3" role="group" aria-label="Temperature Unit Toggle">
+        <input type="radio" class="btn-check" name="unitToggle" id="celsiusToggle" autocomplete="off" checked>
+        <label class="btn btn-outline-secondary" for="celsiusToggle">°C</label>
+        <input type="radio" class="btn-check" name="unitToggle" id="fahrenheitToggle" autocomplete="off">
+        <label class="btn btn-outline-secondary" for="fahrenheitToggle">°F</label>
+      </div>
+      <div id="loadingSpinner" class="mt-3 text-center" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading forecast...</span>
+        </div>
+      </div>
+      <small class="text-muted mt-2 d-block">Example: London, Berlin, Tokyo...</small>
+    </div>
+
+    <!-- Alert Messages -->
+    <div id="alertContainer" class="mb-4" aria-live="polite"></div>
+
+    <!-- Forecast Cards Section -->
+    <div class="card p-4 shadow-sm" id="forecastCards">
+      <h5 class="card-title" id="forecastHeader">7-Day Weather Forecast</h5>
+      <div id="forecastContainer" class="row">
+        <!-- Forecast Data will be dynamically inserted here -->
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Global variable for temperature unit ("C" or "F")
+  let currentUnit = "C";
+
+  // Helper function to format values with fallback
+  function formatValue(val, unit = "", decimals = 1) {
+    return (val !== null && val !== undefined) ? parseFloat(val).toFixed(decimals) + unit : "N/A";
+  }
+
+  // Function to display alert messages
+  function showAlert(message, type) {
+    const alertContainer = document.getElementById("alertContainer");
+    alertContainer.innerHTML = `
+      <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    `;
+  }
+
+  // Function to fetch the weather forecast
+  function loadWeatherForecast() {
+    const token = sessionStorage.getItem("authToken");
+    let location = document.getElementById("forecastLocationInput").value.trim();
+
+    if (!location) {
+      location = sessionStorage.getItem("lastSearchedLocation") || "New York";
+    } else {
+      sessionStorage.setItem("lastSearchedLocation", location);
+    }
+
+    if (!token) {
+      showAlert("Authentication required. Please log in.", "danger");
+      return;
+    }
+
+    document.getElementById("loadingSpinner").style.display = "block";
+
+    fetch(`/weather/api/forecast/?location=${encodeURIComponent(location)}`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Token ${token}`,
+        "Content-Type": "application/json"
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      const forecastContainer = document.getElementById("forecastContainer");
+      const forecastHeader = document.getElementById("forecastHeader");
+      forecastContainer.innerHTML = "";
+
+      if (data.error) {
+        showAlert(data.error, "danger");
+        return;
+      }
+
+      forecastHeader.innerHTML = `7-Day Weather Forecast for ${location}`;
+
+      data.forEach(day => {
+        const weatherIcon = getWeatherIcon(day.weather_description);
+        const forecastDate = new Date(day.time).toLocaleDateString();
+        const temperature = day.temperature_2m.toFixed(1);
+        const windSpeed = parseFloat(day.wind_speed_10m).toFixed(2);
+        const humidity = day.relative_humidity_2m;
+
+        const forecastCard = `
+          <div class="col-md-4 mb-4">
+            <div class="card forecast-card shadow-sm p-3 h-100">
+              <h6>${forecastDate}</h6>
+              <h3>${weatherIcon} ${temperature}°C</h3>
+              <p>${day.weather_description || "No description available"}</p>
+              <small>Wind: ${windSpeed} km/h</small><br>
+              <small>Humidity: ${humidity}%</small>
+            </div>
+          </div>
+        `;
+        forecastContainer.innerHTML += forecastCard;
+      });
+    })
+    .catch(error => {
+      console.error("Error loading weather forecast:", error);
+      showAlert("Failed to load forecast.", "danger");
+    })
+    .finally(() => {
+      document.getElementById("loadingSpinner").style.display = "none";
+    });
+  }
+
+  // Function to assign a weather icon based on condition text
+  function getWeatherIcon(condition) {
+    const conditionLower = condition.toLowerCase();
+    if (conditionLower.includes("rain")) return "🌧️";
+    if (conditionLower.includes("drizzle")) return "🌦️";
+    if (conditionLower.includes("cloud")) return "☁️";
+    if (conditionLower.includes("thunderstorm")) return "⛈️";
+    if (conditionLower.includes("clear")) return "☀️";
+    if (conditionLower.includes("snow")) return "❄️";
+    if (conditionLower.includes("fog")) return "🌫️";
+    if (conditionLower.includes("windy")) return "💨";
+    if (conditionLower.includes("breezy")) return "🌬️";
+    if (conditionLower.includes("hot")) return "🔥";
+    if (conditionLower.includes("warm")) return "🌤️";
+    if (conditionLower.includes("mild")) return "🌄";
+    if (conditionLower.includes("cool")) return "🍃";
+    if (conditionLower.includes("cold")) return "🥶";
+    if (conditionLower.includes("humid")) return "💦";
+    return "🌡️";
+  }
+
+  // Unit toggle event listeners
+  document.getElementById("celsiusToggle").addEventListener("change", function() {
+    if (this.checked) {
+      currentUnit = "C";
+      loadWeatherForecast();
+    }
+  });
+  document.getElementById("fahrenheitToggle").addEventListener("change", function() {
+    if (this.checked) {
+      currentUnit = "F";
+      loadWeatherForecast();
+    }
+  });
+
+  // "Use My Location" functionality via geolocation and reverse geocoding
+  document.getElementById("useMyLocationBtn").addEventListener("click", function() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.address && (data.address.city || data.address.town)) {
+              const city = data.address.city || data.address.town;
+              document.getElementById("forecastLocationInput").value = city;
+              loadWeatherForecast();
+            } else {
+              showAlert("Could not determine your location.", "warning");
+            }
+          })
+          .catch(err => {
+            console.error("Reverse geocoding error:", err);
+            showAlert("Failed to determine your location.", "danger");
+          });
+      }, () => {
+        showAlert("Geolocation permission denied.", "warning");
+      });
+    } else {
+      showAlert("Geolocation is not supported by your browser.", "danger");
+    }
+  });
+
+  // Attach event listener to the forecast button
+  document.getElementById("fetchForecastBtn").addEventListener("click", loadWeatherForecast);
+
+  // Auto-load forecast on page load
+  document.addEventListener("DOMContentLoaded", loadWeatherForecast);
+</script>
+
+<style>
+  :root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --light-bg: #f8f9fa;
+    --hero-bg: url('/static/images/ai-farming-hero.jpg'); /* Ensure this image exists */
+  }
+  
+  body {
+    background-color: var(--light-bg);
+  }
+  
+  /* Hero Section Enhancements */
+  .hero {
+    position: relative;
+    background: var(--hero-bg) no-repeat center center;
+    background-size: cover;
+    height: 70vh; /* Increased height for better visibility */
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6); /* Darker overlay for better text contrast */
+  }
+  
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 800px; /* Centered and limited for better readability */
+  }
+  
+  .hero h1 {
+    font-family: 'Roboto', sans-serif;
+    font-size: 3.5rem; /* Larger title for better visibility */
+    font-weight: bold;
+    text-shadow: 3px 3px 10px rgba(0,0,0,0.7); /* Stronger shadow for emphasis */
+    animation: fadeIn 1.5s ease-in-out;
+  }
+  
+  .hero p {
+    font-size: 1.4rem;
+    font-weight: 300;
+    opacity: 0.9;
+  }
+  
+  .hero .btn {
+    font-size: 1.2rem;
+    padding: 12px 24px;
+    border-radius: 8px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .hero .btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0px 10px 20px rgba(255, 255, 255, 0.3);
+  }
+  
+  /* Keyframes for fade-in effect */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Card Styling */
+  .card {
+    border-radius: 12px;
+  }
+  .forecast-card {
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .forecast-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+  }
+  .btn-link {
+    text-decoration: none;
+  }
+</style>
+{% endblock %}

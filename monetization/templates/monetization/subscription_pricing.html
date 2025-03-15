@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Subscription & Pricing{% endblock %}
+
+{% block content %}
+<div class="container my-5 text-center">
+  <h1 class="mb-4 fw-bold">💡 Contribute & Subscribe</h1>
+  <p class="lead">Choose a plan that best fits your needs or opt for a one‑time report purchase.</p>
+
+  <!-- One-Time Payment Section -->
+  <div class="text-center mb-5 p-4 bg-light shadow rounded">
+    <h3 class="fw-bold text-primary">
+      <span class="me-2">📄</span> <span class="text-decoration-underline">One-Time AI Soil Report</span>
+    </h3>
+    <p class="lead">Pay once and receive a detailed AI-driven soil report.</p>
+    <h2 class="fw-bold text-danger">${{ one_time_price }}</h2>
+    <a href="{% url 'checkout' %}" class="btn btn-lg btn-success fw-bold mt-2">🚀 Purchase Report</a>
+  </div>
+
+  <!-- Subscription Plans Section -->
+  <div class="my-5">
+    <h2 class="text-center fw-bold text-success bg-light d-inline-block px-4 py-2 rounded shadow-sm">
+      🌟 Subscription Plans
+    </h2>
+  </div>
+  
+  <div class="row justify-content-center">
+    {% for plan in subscription_plans %}
+      <div class="col-md-4 mb-4">
+        <div class="card shadow-lg border-info h-100 d-flex flex-column">
+          <div class="card-body text-center d-flex flex-column flex-grow-1">
+            <h3 class="card-title fw-bold">{{ plan.name }}</h3>
+            <p class="card-text text-muted flex-grow-1">{{ plan.description }}</p>
+            <p class="card-text fw-bold text-dark">
+              ⏳ <strong>Duration:</strong> {{ plan.duration|capfirst }} <br>
+              💰 <strong>Price:</strong> ${{ plan.price }} {{ plan.currency }}
+            </p>
+          </div>
+          <!-- Subscribe Button -->
+          <div class="card-footer bg-transparent border-0 text-center">
+            <form method="POST" action="{% url 'process_subscription' %}">
+              {% csrf_token %}
+              <input type="hidden" name="plan_id" value="{{ plan.id }}">
+              <button type="submit" class="btn btn-lg btn-primary fw-bold w-100">🔔 Subscribe Now</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Active Coupons List -->
+  {% if active_coupons %}
+  <div class="alert alert-info mt-5 text-center shadow-sm">
+    <h4 class="fw-bold">🎉 Limited-Time Discounts Available!</h4>
+    <p>Use the following coupon codes to get a discount on the One-Time Report:</p>
+    <ul class="list-unstyled">
+      {% for coupon in active_coupons %}
+      <li class="fw-bold text-dark">
+        🏷️ <strong>{{ coupon.code }}</strong> – {{ coupon.discount_percent }}% off, valid until {{ coupon.expires_at|date:"M d, Y" }}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- Back to Home Button -->
+  <div class="text-center mt-4">
+    <a href="{% url 'landing_page' %}" class="btn btn-secondary btn-lg fw-bold">🏠 Back to Home</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <h2 class="text-center mb-4">Login</h2>
+
+            <!-- Flash Messages (Handled in base.html) -->
+
+            <div class="card shadow-sm p-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Email</label>
+                        <input type="email" class="form-control" name="email" required placeholder="Enter your email">
+                    </div>
+
+                    <div class="mb-3 position-relative">
+                        <label class="form-label fw-bold">Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="password" id="passwordField" required placeholder="Enter your password">
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 mt-3">Login</button>
+                </form>
+
+                <div class="text-center mt-3">
+                    <a href="{% url 'password_reset_request' %}" class="text-decoration-none">Forgot your password?</a>
+                </div>
+
+                <p class="text-center mt-3">
+                    Don't have an account? <a href="{% url 'register' %}" class="text-decoration-none">Register here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Password Toggle Script -->
+<!-- Include SweetAlert2 CSS and JS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    document.getElementById("togglePassword").addEventListener("click", function() {
+        let passwordField = document.getElementById("passwordField");
+        let icon = this.querySelector("i");
+        if (passwordField.type === "password") {
+            passwordField.type = "text";
+            icon.classList.remove("bi-eye");
+            icon.classList.add("bi-eye-slash");
+        } else {
+            passwordField.type = "password";
+            icon.classList.remove("bi-eye-slash");
+            icon.classList.add("bi-eye");
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const loginForm = document.querySelector("form");
+
+        loginForm.addEventListener("submit", function(event) {
+            event.preventDefault();  // Prevent normal form submission
+
+            let formData = new FormData(loginForm);
+            
+            fetch("/accounts/login/", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())  // Read JSON response
+            .then(data => {
+                if (data.authToken) {
+                    sessionStorage.setItem("authToken", data.authToken);  // Store token in sessionStorage
+                    console.log("🔑 AuthToken stored:", data.authToken);
+                    window.location.href = "/accounts/dashboard/";  // Redirect after login
+                } else {
+                    console.warn("❌ No authToken received!");
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Login Failed',
+                        text: 'Invalid login credentials. Please try again.',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error("Login failed:", error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Login Failed',
+                    text: 'Invalid login credentials. Please try again.',
+                    confirmButtonText: 'OK'
+                });
+            });
+        });
+    });
+
+    // Logout: Remove authToken from sessionStorage
+    function logout() {
+        fetch("/accounts/logout/", {
+            method: "POST",
+        })
+        .then(response => response.json())
+        .then(() => {
+            sessionStorage.removeItem("authToken");  // Remove token from sessionStorage
+            window.location.href = "/accounts/login/";
+        })
+        .catch(error => console.error("Logout failed:", error));
+    }
+</script>
+
+
+{% endblock %}

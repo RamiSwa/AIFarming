@@ -1,0 +1,617 @@
+{% extends 'base.html' %}
+
+{% block title %}Weather Dashboard{% endblock %}
+
+{% block content %}
+<main class="container my-4">
+  <!-- Page Header -->
+  <header class="mb-4 text-center">
+    <h2 class="display-5">🌤️ Weather Dashboard</h2>
+    <p class="text-muted">Explore detailed weather data, trends, and insights at a glance.</p>
+  </header>
+  
+  <!-- Main Row: Dashboard Content + Side Panel -->
+  <div class="row">
+    <!-- Main Content Column (9/12) -->
+    <div class="col-md-9">
+      <!-- Advanced Search -->
+      <section class="card p-4 mt-3 shadow-sm">
+        <h5 class="card-title">🔍 Advanced Search</h5>
+        <div class="row g-3">
+          <div class="col-md-4 col-12">
+            <input type="text" id="searchLocation" class="form-control" placeholder="Enter a city (e.g., Texas)">
+          </div>
+          <div class="col-md-4 col-6">
+            <input type="text" id="startDate" class="form-control" placeholder="Start Date">
+          </div>
+          <div class="col-md-4 col-6">
+            <input type="text" id="endDate" class="form-control" placeholder="End Date">
+          </div>
+          <div class="col-12 d-grid d-md-block">
+            <button id="searchBtn" class="btn btn-primary w-100">🔍 Search</button>
+          </div>
+        </div>
+        <div class="row mt-2">
+          <div class="col text-center">
+            <button class="btn btn-outline-secondary m-1 quick-filter" data-days="1">Last 24H</button>
+            <button class="btn btn-outline-secondary m-1 quick-filter" data-days="7">Last 7 Days</button>
+            <button class="btn btn-outline-secondary m-1 quick-filter" data-days="30">Last 30 Days</button>
+            <button class="btn btn-outline-danger" id="clearFilters">Clear</button>
+          </div>
+        </div>
+      </section>
+    
+      
+      <!-- Quick Summary Cards -->
+      <section id="summaryCards" class="row mt-4 text-center">
+        <div class="col-md-4 mb-3">
+          <div class="card text-white bg-danger">
+            <div class="card-body">
+              <h5 class="card-title">🔥 Hottest Day in the Last 7 Days</h5>
+              <p class="card-text" id="hottestDay">-- °C</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="card text-white bg-success">
+            <div class="card-body">
+              <h5 class="card-title">💧 Average Humidity This Week</h5>
+              <p class="card-text" id="avgHumidity">-- %</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="card text-white bg-primary">
+            <div class="card-body">
+              <h5 class="card-title">☔ Rainfall Trend Over the Last 7 Days</h5>
+              <p class="card-text" id="totalPrecipitation">-- mm</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Weather Trend Chart -->
+      <section class="card p-4 mt-3 shadow-sm weatherChart">
+        <div class="card-body">
+          <h5 class="card-title">Weather Trends 📊</h5>
+          <canvas id="weatherChart" role="img" aria-label="Line chart showing weather trends" height="100"></canvas>
+        </div>
+      </section>
+      
+      <!-- Fetch Weather for Location -->
+      <section class="card p-4 mt-3 shadow-sm">
+        <h5 class="card-title">Fetch Weather for Location</h5>
+        <div class="input-group">
+          <input type="text" id="locationInput" class="form-control m-1" placeholder="Enter a city name (e.g., Berlin)" aria-label="City Name">
+          <button id="fetchWeatherBtn" class="btn btn-primary m-1">Get Weather</button>
+        </div>
+        <div id="loadingSpinner" class="mt-2 text-center" style="display: none;">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+        <small class="text-muted mt-2 d-block">Example: New York, Berlin, Tokyo...</small>
+      </section>
+      
+      <!-- Alert Messages -->
+      <div id="alertContainer" class="mt-3" aria-live="polite"></div>
+      
+      <!-- Weather Data Table -->
+      <section class="card mt-4 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title" id="weatherHeader">Latest Weather Data</h5>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-dark">
+                <tr>
+                  <th>Time</th>
+                  <th>Location</th>
+                  <th>Temperature (°C)</th>
+                  <th>Humidity (%)</th>
+                  <th>Wind Speed (km/h)</th>
+                  <th>Precipitation (mm)</th>
+                </tr>
+              </thead>
+              <tbody id="weatherTableBody">
+                <!-- Weather records will be dynamically inserted here -->
+              </tbody>
+            </table>
+          </div>
+          <!-- Pagination Controls -->
+          <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+              <li class="page-item" id="prevPageItem">
+                <button class="page-link" id="prevBtn">Previous</button>
+              </li>
+              <li class="page-item disabled">
+                <span class="page-link" id="pageInfo">Page 1 of ?</span>
+              </li>
+              <li class="page-item" id="nextPageItem">
+                <button class="page-link" id="nextBtn">Next</button>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </section>
+    </div> <!-- End of Main Content Column -->
+
+    <!-- Side Panel Column (3/12) -->
+    <aside class="col-lg-3">
+      <div id="sidePanel" class="card p-3 mt-3 shadow-lg sticky-panel">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="text-primary mb-0">📖 Dashboard Guide</h5>
+          <button id="togglePanelBtn" class="btn btn-sm btn-outline-secondary">❌</button>
+        </div>
+        <hr>
+        <ul class="list-group">
+          <li class="list-group-item"><strong>🔍 Search:</strong> Enter a location & date range.</li>
+          <li class="list-group-item"><strong>📆 Default Range:</strong> Shows last 7 days by default.</li>
+          <li class="list-group-item"><strong>⚡ Quick Filters:</strong> "24H", "7D", "30D" buttons.</li>
+          <li class="list-group-item"><strong>📊 Trends Chart:</strong> View temperature, wind & rain.</li>
+          <li class="list-group-item"><strong>📋 Data Table:</strong> Explore detailed weather records.</li>
+          <li class="list-group-item"><strong>🌍 Fetch New Data:</strong> Update stored weather info.</li>
+          <li class="list-group-item text-muted">🚀 <strong>Coming Soon:</strong> Export data as CSV.</li>
+        </ul>
+      </div>
+    </aside>
+  </div> <!-- End of Main Row -->
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Flatpickr (assumed to be included in base.html or add CDN link here) -->
+
+<script>
+// ==========================
+// Global Variables & Chart Instance
+// ==========================
+let nextPageUrl = null;
+let prevPageUrl = null;
+let weatherChart;  // Chart.js instance
+
+// ==========================
+// Utility: Debounce Function (500ms)
+// ==========================
+function debounce(func, delay) {
+  let timeout;
+  return function(...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), delay);
+  };
+}
+
+// ==========================
+// Initialize Flatpickr for Date Inputs
+// ==========================
+flatpickr("#startDate", { dateFormat: "Y-m-d" });
+flatpickr("#endDate", { dateFormat: "Y-m-d" });
+
+// ==========================
+// Helper Functions for Date Formatting
+// ==========================
+function getFormattedDate(date) {
+  return date.toISOString().split('T')[0];
+}
+function getDateNDaysAgo(n) {
+  const date = new Date();
+  date.setDate(date.getDate() - n);
+  return getFormattedDate(date);
+}
+function getToday() {
+  return getFormattedDate(new Date());
+}
+
+// ==========================
+// Quick Filter & Clear Filters
+// ==========================
+function applyQuickFilter(days) {
+  document.getElementById("startDate").value = getDateNDaysAgo(days);
+  document.getElementById("endDate").value = getToday();
+  if (document.getElementById("searchLocation").value.trim()) {
+    searchWeather();
+  }
+}
+function clearFilters() {
+  document.getElementById("searchLocation").value = "";
+  document.getElementById("startDate").value = "";
+  document.getElementById("endDate").value = "";
+  updateWeatherHeader("", "", "");
+}
+
+// ==========================
+// Update Weather Data Header
+// ==========================
+function updateWeatherHeader(location, startDate, endDate) {
+  const header = document.getElementById("weatherHeader");
+  if (location && startDate && endDate) {
+    header.innerHTML = `Latest Weather Data - ${location} from ${startDate} until ${endDate}`;
+  } else if (location) {
+    header.innerHTML = `Latest Weather Data - ${location}`;
+  } else if (startDate && endDate) {
+    header.innerHTML = `Latest Weather Data from ${startDate} until ${endDate}`;
+  } else {
+    header.innerHTML = "Latest Weather Data";
+  }
+}
+
+// ==========================
+// Update Weather Table, Chart, and Summary Cards
+// ==========================
+function updateWeatherTable(data) {
+  const tableBody = document.getElementById("weatherTableBody");
+  tableBody.innerHTML = "";
+  if (data.error) {
+    showAlert(data.error, "danger");
+    return;
+  }
+  const labels = [], temperatures = [], precipitations = [], windSpeeds = [], humidities = [];
+  data.results.forEach(record => {
+    tableBody.innerHTML += `
+      <tr>
+        <td>${new Date(record.time).toLocaleString()}</td>
+        <td>${record.original_location || "Unknown"}</td>
+        <td>${record.temperature_2m.toFixed(1)}°C</td>
+        <td>${record.relative_humidity_2m}%</td>
+        <td>${parseFloat(record.wind_speed_10m).toFixed(2)} km/h</td>
+        <td>${parseFloat(record.precipitation).toFixed(2)} mm</td>
+      </tr>
+    `;
+    labels.push(new Date(record.time).toLocaleString());
+    temperatures.push(record.temperature_2m);
+    precipitations.push(record.precipitation);
+    windSpeeds.push(record.wind_speed_10m);
+    humidities.push(record.relative_humidity_2m);
+  });
+  
+  // Update pagination controls
+  nextPageUrl = data.next;
+  prevPageUrl = data.previous;
+  document.getElementById("prevPageItem").classList.toggle("disabled", !prevPageUrl);
+  document.getElementById("nextPageItem").classList.toggle("disabled", !nextPageUrl);
+  document.getElementById("pageInfo").innerHTML = `Page ${data.current_page} of ${data.total_pages}`;
+
+  updateChartAndSummary(labels, temperatures, humidities, precipitations, windSpeeds);
+}
+
+function updateChartAndSummary(labels, temperatures, humidities, precipitations, windSpeeds) {
+  const maxTemp = Math.max(...temperatures);
+  const hottestIndex = temperatures.indexOf(maxTemp);
+  const hottestTime = labels[hottestIndex];
+  const avgHumidity = (humidities.reduce((a, b) => a + b, 0) / humidities.length).toFixed(1);
+  const totalPrecip = precipitations.reduce((a, b) => a + b, 0).toFixed(1);
+
+  document.getElementById("hottestDay").innerText = `${maxTemp.toFixed(1)}°C at ${hottestTime}`;
+  document.getElementById("avgHumidity").innerText = `${avgHumidity}%`;
+  document.getElementById("totalPrecipitation").innerText = `${totalPrecip} mm`;
+
+  const ctx = document.getElementById("weatherChart").getContext("2d");
+  const chartData = {
+    labels: labels,
+    datasets: [
+      {
+        label: "Temperature (°C)",
+        data: temperatures,
+        borderColor: "red",
+        backgroundColor: "rgba(255,0,0,0.2)",
+        fill: false,
+        tension: 0.1,
+      },
+      {
+        label: "Precipitation (mm)",
+        data: precipitations,
+        borderColor: "blue",
+        backgroundColor: "rgba(0,0,255,0.2)",
+        fill: false,
+        tension: 0.1,
+      },
+      {
+        label: "Wind Speed (km/h)",
+        data: windSpeeds,
+        borderColor: "green",
+        backgroundColor: "rgba(0,255,0,0.2)",
+        fill: false,
+        tension: 0.1,
+      }
+    ]
+  };
+
+  if (weatherChart) {
+    weatherChart.data = chartData;
+    weatherChart.update();
+  } else {
+    weatherChart = new Chart(ctx, {
+      type: "line",
+      data: chartData,
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: "top" },
+          title: { display: true, text: "Weather Trends" }
+        }
+      }
+    });
+  }
+}
+
+// ==========================
+// Pagination: Load Specific Page
+// ==========================
+function loadPage(url) {
+  const token = sessionStorage.getItem("authToken");
+  if (!token) {
+    showAlert("Authentication required. Please log in.", "danger");
+    return;
+  }
+  toggleLoadingSpinner(true);
+  fetch(url, {
+    method: "GET",
+    headers: {
+      "Authorization": `Token ${token}`,
+      "Content-Type": "application/json"
+    }
+  })
+  .then(response => response.json())
+  .then(data => updateWeatherTable(data))
+  .catch(error => {
+    console.error("Error loading page:", error);
+    showAlert("Failed to load data.", "danger");
+  })
+  .finally(() => toggleLoadingSpinner(false));
+}
+
+// ==========================
+// Search Historical Weather Data
+// ==========================
+function searchWeather() {
+  const location = document.getElementById("searchLocation").value.trim();
+  const startDate = document.getElementById("startDate").value;
+  const endDate = document.getElementById("endDate").value;
+  const token = sessionStorage.getItem("authToken");
+  const searchBtn = document.getElementById("searchBtn");
+  if (!token) {
+    showAlert("Authentication required. Please log in.", "danger");
+    return;
+  }
+  if (!location && !startDate && !endDate) {
+    showAlert("Please enter at least a location or a date range.", "warning");
+    return;
+  }
+  const queryParams = [];
+  if (location) queryParams.push(`location=${encodeURIComponent(location)}`);
+  if (startDate) queryParams.push(`start_date=${encodeURIComponent(startDate)}`);
+  if (endDate) queryParams.push(`end_date=${encodeURIComponent(endDate)}`);
+  const queryString = queryParams.join("&");
+  searchBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Searching...`;
+  searchBtn.disabled = true;
+  toggleLoadingSpinner(true);
+  fetch(`/weather/api/data/?${queryString}`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Token ${token}`,
+      "Content-Type": "application/json"
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    updateWeatherTable(data);
+    updateWeatherHeader(location, startDate, endDate);
+  })
+  .catch(error => {
+    console.error("Error loading historical weather data:", error);
+    showAlert("Failed to load historical weather data.", "danger");
+  })
+  .finally(() => {
+    searchBtn.innerHTML = "🔍 Search";
+    searchBtn.disabled = false;
+    toggleLoadingSpinner(false);
+  });
+}
+
+// ==========================
+// Fetch Weather for a Location (POST)
+// ==========================
+function fetchWeather() {
+  const locationInput = document.getElementById("locationInput");
+  const location = locationInput.value.trim();
+  const fetchBtn = document.getElementById("fetchWeatherBtn");
+  if (!location) {
+    showAlert("Please enter a location!", "danger");
+    return;
+  }
+  const token = sessionStorage.getItem("authToken");
+  if (!token) {
+    showAlert("Authentication required. Please log in.", "danger");
+    return;
+  }
+  const csrfToken = getCSRFToken();
+  sessionStorage.setItem("lastSearchedLocation", location);
+  fetchBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Fetching...`;
+  fetchBtn.disabled = true;
+  toggleLoadingSpinner(true);
+  fetch("/weather/api/fetch/", {
+    method: "POST",
+    headers: {
+      "Authorization": `Token ${token}`,
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrfToken
+    },
+    body: JSON.stringify({ location: location })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.error) {
+      showAlert(data.error, "danger");
+    } else {
+      showAlert("Weather data fetched successfully!", "success");
+      loadWeatherData(location);
+    }
+  })
+  .catch(error => {
+    console.error("Error fetching weather:", error);
+    showAlert("Failed to fetch weather. Please try again.", "danger");
+  })
+  .finally(() => {
+    fetchBtn.innerHTML = "Get Weather";
+    fetchBtn.disabled = false;
+    toggleLoadingSpinner(false);
+    document.getElementById("startDate").value = "";
+    document.getElementById("endDate").value = "";
+    updateWeatherHeader(location, "", "");
+  });
+}
+
+// ==========================
+// Load Stored Weather Data
+// ==========================
+function loadWeatherData(location = null) {
+  const token = sessionStorage.getItem("authToken");
+  if (!token) {
+    showAlert("Authentication required. Please log in.", "danger");
+    return;
+  }
+  if (!location) {
+    location = sessionStorage.getItem("lastSearchedLocation");
+    if (!location) {
+      showAlert("Please enter a location to fetch data!", "danger");
+      return;
+    }
+  }
+  toggleLoadingSpinner(true);
+  fetch(`/weather/api/data/?location=${encodeURIComponent(location)}`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Token ${token}`,
+      "Content-Type": "application/json"
+    }
+  })
+  .then(response => response.json())
+  .then(data => updateWeatherTable(data))
+  .catch(error => {
+    console.error("Error loading weather data:", error);
+    showAlert("Failed to load weather data.", "danger");
+  })
+  .finally(() => toggleLoadingSpinner(false));
+}
+
+// ==========================
+// Display Alert Messages
+// ==========================
+function showAlert(message, type) {
+  const alertContainer = document.getElementById("alertContainer");
+  alertContainer.innerHTML = `
+    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  `;
+}
+
+// ==========================
+// Get CSRF Token from Cookies
+// ==========================
+function getCSRFToken() {
+  let cookieValue = null;
+  const cookies = document.cookie.split(";");
+  for (let cookie of cookies) {
+    cookie = cookie.trim();
+    if (cookie.startsWith("csrftoken=")) {
+      cookieValue = cookie.substring("csrftoken=".length);
+      break;
+    }
+  }
+  return cookieValue;
+}
+
+// ==========================
+// Toggle Loading Spinner Visibility
+// ==========================
+function toggleLoadingSpinner(show) {
+  document.getElementById("loadingSpinner").style.display = show ? "block" : "none";
+}
+
+// ==========================
+// Event Listeners
+// ==========================
+document.addEventListener("DOMContentLoaded", () => {
+  // Quick filter buttons
+  document.querySelectorAll(".quick-filter").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const days = btn.getAttribute("data-days");
+      applyQuickFilter(days);
+    });
+  });
+  
+  // Clear filters
+  document.getElementById("clearFilters").addEventListener("click", clearFilters);
+  
+  // Search button
+  document.getElementById("searchBtn").addEventListener("click", searchWeather);
+  
+  // Fetch Weather button
+  document.getElementById("fetchWeatherBtn").addEventListener("click", fetchWeather);
+  
+  // Pagination buttons
+  document.getElementById("prevBtn").addEventListener("click", () => { if (prevPageUrl) loadPage(prevPageUrl); });
+  document.getElementById("nextBtn").addEventListener("click", () => { if (nextPageUrl) loadPage(nextPageUrl); });
+  
+  // Side Panel Toggle
+  document.getElementById("togglePanelBtn").addEventListener("click", () => {
+    const panel = document.getElementById("sidePanel");
+    panel.classList.toggle("hidden");
+  });
+  
+  // On page load, auto-apply default date filter (Last 7 Days) if a location was previously searched
+  const lastSearchedLocation = sessionStorage.getItem("lastSearchedLocation");
+  if (lastSearchedLocation) {
+    if (!document.getElementById("startDate").value) {
+      document.getElementById("startDate").value = getDateNDaysAgo(7);
+    }
+    if (!document.getElementById("endDate").value) {
+      document.getElementById("endDate").value = getToday();
+    }
+    searchWeather();
+  }
+});
+</script>
+
+<!-- ========================== -->
+<!-- Custom Styles for Enhanced Visibility -->
+<!-- ========================== -->
+<style>
+  :root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --danger-color: #dc3545;
+    --light-bg: #f8f9fa;
+  }
+  body {
+    background-color: var(--light-bg);
+  }
+  .sticky-panel {
+    position: sticky;
+    top: 20px;
+    z-index: 1000;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  }
+  .sticky-panel.hidden {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  .list-group-item {
+    border: none;
+    padding: 10px 15px;
+    font-size: 0.95rem;
+  }
+
+@media (max-width: 768px) {
+  .weatherChart {
+    display: none !important;
+  }
+}
+</style>
+{% endblock %}

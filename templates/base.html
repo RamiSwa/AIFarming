@@ -1,0 +1,229 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Farming{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.ico' %}">
+
+    <!-- ✅ SEO & Social Sharing -->
+    <meta name="description" content="AI-powered smart farming platform that provides real-time soil, weather, and crop insights.">
+    <meta property="og:title" content="AI Farming - Smart Agriculture with AI">
+    <meta property="og:description" content="Revolutionize your farm with AI-driven insights on soil, weather, and crop recommendations.">
+    <meta property="og:image" content="{% static 'images/ai_farming_preview.png' %}">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AI Farming - Smart Agriculture with AI">
+    <meta name="twitter:description" content="Optimize your farming with AI-driven real-time insights.">
+
+    <!-- ✅ Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+
+    <!-- ✅ Custom CSS -->
+    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+
+    <!-- ✅ Leaflet CSS (For Maps) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <!-- ✅ Custom Inline Styles for Navbar & Footer -->
+    <style>
+        /* Global layout for sticky footer */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        .wrapper {
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .content {
+            flex: 1;
+            /* Ensure there is enough space at the bottom if needed */
+            margin-bottom: 80px;
+        }
+
+        /* Navbar Customization */
+        .navbar {
+            background: linear-gradient(90deg, rgba(30,86,49,0.8), rgba(164,222,2,0.8));
+            backdrop-filter: blur(10px);
+        }
+        .navbar-nav .nav-link:hover {
+            color: #0a0b06;
+            text-shadow: 0 0 5px rgba(164,222,2,0.8);
+        }
+        .navbar-nav .nav-link.active {
+            border-bottom: 2px solid #61de02;
+        }
+        /* Profile Dropdown Enhancement */
+        .dropdown-menu {
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Footer Customization */
+        footer {
+            background: rgba(232,245,233,0.9) url("{% static 'images/footer-pattern.png' %}") no-repeat center center;
+            background-size: cover;
+            border-top: 1px solid rgba(164,222,2,0.5);
+        }
+        footer a:hover {
+            color: #1E5631;
+            text-shadow: 0 0 5px rgba(30,86,49,0.8);
+        }
+        .back-to-top {
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #1E5631;
+        }
+        .back-to-top:hover {
+            text-decoration: underline;
+        }
+
+        /* Mobile Responsive Adjustments */
+        @media (max-width: 576px) {
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+            .navbar-nav .nav-link {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.9rem;
+            }
+            .wrapper {
+                padding-top: 80px; /* extra space for fixed navbar */
+            }
+            .content {
+                margin-bottom: 100px;
+            }
+            .back-to-top {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+    <!-- ✅ Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{% url 'landing_page' %}">
+                <img src="{% static 'images/logo_AI_Farming_round.png' %}" alt="Logo" width="40" height="40" class="d-inline-block align-text-top">
+                AI Farming
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'landing_page' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'weather_page' %}active{% endif %}" href="{% url 'weather_page' %}">Weather</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'soil-dashboard' %}active{% endif %}" href="{% url 'soil-dashboard' %}">Soil</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'recommendations_page' %}active{% endif %}" href="{% url 'recommendations_page' %}">Recommendations</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'request_soil_report' %}active{% endif %}" href="{% url 'request_soil_report' %}">Generate PDF Report</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'subscription_pricing' %}active{% endif %}" href="{% url 'subscription_pricing' %}">Pricing</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'blog_page' %}active{% endif %}" href="{% url 'blog_list' %}">Blog</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'contact_page' %}active{% endif %}" href="{% url 'contact_page' %}">Contact</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'donation_page' %}active{% endif %}" href="{% url 'donation_page' %}">Contribute</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="d-flex align-items-center">
+                {% if user.is_authenticated %}
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown">
+                        <img src="{{ user.profile.profile_picture.url }}" 
+                             alt="User Profile" width="40" height="40" 
+                             class="rounded-circle me-2" 
+                             onerror="this.onerror=null;this.src='{% static 'images/default-profile.png' %}';">
+                        {{ user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end text-small">
+                            <li><a class="dropdown-item" href="{% url 'profile_management' %}">Profile</a></li>
+                            {% if user.is_superuser %}
+                                <li><a class="dropdown-item" href="{% url 'admin:index' %}">Admin Panel</a></li>
+                            {% endif %}
+                            <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">Logout</a></li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <a class="btn btn-outline-light me-2" href="{% url 'login' %}">Login</a>
+                    <a class="btn btn-success" href="{% url 'register' %}">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Wrapper for Sticky Footer -->
+    <div class="wrapper" style="padding-top: 70px;">
+        <!-- ✅ Flash Messages -->
+        <div class="container my-3">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <!-- ✅ Main Content -->
+        <div class="content">
+            <div class="container mt-4">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+
+        <!-- ✅ Footer -->
+        <footer class="text-dark text-center py-4">
+            <p class="mb-1">&copy; 2025 AI Farming. All rights reserved.</p>
+            <p>
+                <a href="{% url 'about_page' %}" class="text-dark">About</a> | 
+                <a href="{% url 'contact_page' %}" class="text-dark">Contact</a> | 
+                <a href="{% url 'blog_list' %}" class="text-dark">Blog</a> | 
+                <a href="{% url 'privacy_policy' %}" class="text-dark">Privacy Policy</a>
+            </p>
+            <a href="#" class="back-to-top">Back to Top</a>
+        </footer>
+    </div>
+
+    <!-- ✅ Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- ✅ Deferred Scripts (Lazy Load Heavy Assets) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script defer src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script defer src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

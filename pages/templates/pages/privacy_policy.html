@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block title %}{{ privacy_policy.title }} - AI Farming{% endblock %}
+{% block content %}
+
+<!-- ✅ HERO SECTION -->
+<section class="hero-section text-center text-light py-5" style="
+    background: url('/static/images/privacy_banner.jpg') no-repeat center center/cover;
+    position: relative;">
+    <div class="overlay" style="
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.5);"></div>
+    <div class="container position-relative">
+        <h1 class="fw-bold display-4">{{ privacy_policy.title }}</h1>
+        <p class="lead fw-light">Protecting your data and privacy with transparency.</p>
+    </div>
+</section>
+
+<!-- ✅ PRIVACY POLICY CONTENT (IMPROVED READABILITY) -->
+<section class="container mt-5 privacy-policy-container">  
+    <h2 class="text-primary"><i class="fas fa-info-circle"></i> Introduction</h2>
+    <p>{{ privacy_policy.introduction|linebreaks }}</p>
+
+    <hr class="my-4"> <!-- Section Divider -->
+
+    <h2 class="text-success"><i class="fas fa-database"></i> Data Collection & Usage</h2>
+
+    <h4 class="text-info mt-3"><strong>📝 Data We Collect</strong></h4>
+    <p>{{ privacy_policy.data_we_collect|linebreaks }}</p>
+
+    <h4 class="text-info mt-3"><strong>📌 How We Use Your Data</strong></h4>
+    <p>{{ privacy_policy.how_we_use_data|linebreaks }}</p>
+
+    <h4 class="text-info mt-3"><strong>🤖 AI Data Usage</strong></h4>
+    <p>{{ privacy_policy.ai_data_usage|linebreaks }}</p>
+
+    <hr class="my-4"> <!-- Section Divider -->
+
+    <h2 class="text-warning"><i class="fas fa-shield-alt"></i> Data Sharing & Security</h2>
+
+    <h4 class="text-danger mt-3"><strong>📡 Data Sharing</strong></h4>
+    <p>{{ privacy_policy.data_sharing|linebreaks }}</p>
+
+    <h4 class="text-danger mt-3"><strong>🔐 Data Security Measures</strong></h4>
+    <p>{{ privacy_policy.data_security|linebreaks }}</p>
+
+    <hr class="my-4"> <!-- Section Divider -->
+
+    <h2 class="text-info"><i class="fas fa-balance-scale"></i> User Rights & Compliance</h2>
+    <p>{{ privacy_policy.user_rights|linebreaks }}</p>
+
+    <hr class="my-4"> <!-- Section Divider -->
+
+    <h2 class="text-secondary"><i class="fas fa-cookie-bite"></i> Cookies & Policy Updates</h2>
+
+    <h4 class="text-dark mt-3"><strong>📢 Cookies Policy</strong></h4>
+    <p>{{ privacy_policy.cookies_policy|linebreaks }}</p>
+
+    <h4 class="text-dark mt-3"><strong>📜 Updates to This Policy</strong></h4>
+    <p>{{ privacy_policy.updates_policy|linebreaks }}</p>
+
+    <hr class="my-4"> <!-- Section Divider -->
+
+    <h2 class="text-primary"><i class="fas fa-envelope"></i> Contact Information</h2>
+    <p>{{ privacy_policy.contact_info|linebreaks }}</p>
+</section>
+
+<!-- ✅ BACK TO TOP BUTTON -->
+<button id="back-to-top" onclick="scrollToTop()">⬆ Back to Top</button>
+
+<!-- ✅ CUSTOM STYLES -->
+<style>
+    /* Improve readability */
+    .privacy-policy-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+        line-height: 1.6;
+    }
+
+    /* Section headings */
+    h2 {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 40px;
+    }
+
+    /* Back to Top Button */
+    #back-to-top {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #007bff;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        display: none;
+        font-size: 16px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        transition: 0.3s ease-in-out;
+    }
+    #back-to-top:hover {
+        background-color: #0056b3;
+    }
+    .privacy-policy-container {
+        max-width: 900px; /* ✅ Prevents text from stretching too wide */
+        margin: 0 auto; /* ✅ Centers the content */
+        padding: 20px;
+        line-height: 1.7; /* ✅ Better readability */
+    }
+    @media (max-width: 768px) {
+        .privacy-policy-container {
+            padding: 15px; /* ✅ Adds more padding on mobile */
+        }
+        h2 {
+            font-size: 22px; /* ✅ Adjusts for smaller screens */
+        }
+    }
+    
+</style>
+
+<!-- ✅ SCROLL TO TOP FUNCTION -->
+<script>
+    window.onscroll = function() {
+        let button = document.getElementById("back-to-top");
+        if (document.documentElement.scrollTop > 200) {  /* Reduced from 300 */
+            button.style.display = "block";
+        } else {
+            button.style.display = "none";
+        }
+    };
+
+    function scrollToTop() {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+</script>
+
+{% endblock %}

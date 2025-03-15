@@ -1,0 +1,10 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+        <a href="{% url 'monetization_dashboard' %}" class="btn btn-primary">
+            📊 Monetization Dashboard
+        </a>
+    </div>
+    {{ block.super }}
+{% endblock %}

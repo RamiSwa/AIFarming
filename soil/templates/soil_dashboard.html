@@ -1,0 +1,1059 @@
+{% extends 'base.html' %}
+{% block title %}Soil Data Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2">
+  <div class="row">
+    <!-- Header: Common Filters & Actions -->
+    <div class="card p-3 mb-4">
+      <h2 class="text-center mb-4">🌱 Soil Data Dashboard</h2>
+      <hr class="my-3">
+      <!-- Filters & Fetch Input -->
+      <div class="row gy-2">
+        <div class="col-12 col-md-4">
+          <label for="locationFilter" class="form-label">Filter by Location:</label>
+          <input type="text" id="locationFilter" class="form-control" placeholder="Enter location...">
+        </div>
+        <div class="col-12 col-md-4">
+          <label for="dateRange" class="form-label">Select Date Range:</label>
+          <input type="text" id="dateRange" class="form-control" placeholder="Pick a date range">
+        </div>
+        <div class="col-12 col-md-2">
+          <button class="btn btn-primary w-100" onclick="fetchSoilData()">🔄 Load Data</button>
+        </div>
+        <div class="col-12 col-md-2">
+          <button class="btn btn-success w-100" onclick="fetchLiveSoilData()">🌍 Fetch Live Data</button>
+        </div>
+      </div>
+      <!-- Quick Filter & Clear Filters Buttons -->
+      <div class="row gy-2 mt-3">
+        <div class="col-12 col-md-6">
+          <button class="btn btn-info w-100" onclick="quickFilterLast7Days()">📅 Last 7 Days</button>
+        </div>
+        <div class="col-12 col-md-6">
+          <button class="btn btn-outline-danger w-100" onclick="clearFilters()">❌ Clear Filters</button>
+        </div>
+      </div>
+    </div>
+    <!-- End Header -->
+
+    <!-- Sidebar: Data Entry & CSV Controls -->
+    <div class="col-12 col-lg-3">
+      <!-- Manual Data Entry Form -->
+      <div class="card p-3 mb-3">
+        <h5>
+          <button class="btn btn-link text-dark fw-bold w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#manualDataEntrySection" aria-expanded="false">
+            📋 Manual Data Entry ⬇
+          </button>
+        </h5>
+        <div id="manualDataEntrySection" class="collapse">
+          <div class="p-2">
+            <div class="mb-2">
+              <label for="manualTime" class="form-label">📅 Time of Measurement:</label>
+              <div class="input-group">
+                <input type="text" id="manualTime" class="form-control" placeholder="Select Date & Time">
+                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+              </div>
+            </div>
+            <div class="mb-2">
+              <label for="manualLocation" class="form-label">Location</label>
+              <input type="text" id="manualLocation" class="form-control" placeholder="Enter location...">
+            </div>
+            <div class="mb-2">
+              <label for="manualTemp0to7" class="form-label">Soil Temp (0-7cm)</label>
+              <input type="number" id="manualTemp0to7" class="form-control" placeholder="°C">
+            </div>
+            <div class="mb-2">
+              <label for="manualTemp7to28" class="form-label">Soil Temp (7-28cm)</label>
+              <input type="number" id="manualTemp7to28" class="form-control" placeholder="°C">
+            </div>
+            <div class="mb-2">
+              <label for="manualMoisture" class="form-label">Moisture (%)</label>
+              <input type="number" id="manualMoisture" class="form-control" placeholder="%">
+            </div>
+            <div class="mb-2">
+              <label for="manualPH" class="form-label">pH Level</label>
+              <input type="number" step="0.1" id="manualPH" class="form-control" placeholder="pH">
+            </div>
+            <div class="mb-2">
+              <label for="manualNitrogen" class="form-label">Nitrogen</label>
+              <input type="number" id="manualNitrogen" class="form-control" placeholder="ppm">
+            </div>
+            <div class="mb-2">
+              <label for="manualPhosphorus" class="form-label">Phosphorus</label>
+              <input type="number" id="manualPhosphorus" class="form-control" placeholder="ppm">
+            </div>
+            <div class="mb-2">
+              <label for="manualPotassium" class="form-label">Potassium</label>
+              <input type="number" id="manualPotassium" class="form-control" placeholder="ppm">
+            </div>
+            <div class="d-grid gap-2">
+              <button class="btn btn-primary w-100" onclick="submitManualData()">✅ Submit</button>
+              <button class="btn btn-outline-danger w-100" onclick="clearManualEntry()">❌ Clear All</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CSV Upload -->
+      <div class="card p-3 mb-3">
+        <div class="accordion" id="csvUploadAccordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header mb-3">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#uploadCSV">
+                📂 Upload CSV File
+              </button>
+            </h2>
+            <div id="uploadCSV" class="accordion-collapse collapse">
+              <div class="accordion-body">
+                <input type="file" id="csvFileInput" class="form-control mb-2" onchange="previewCSV(this.files[0])">
+                <div class="d-grid gap-2">
+                  <button class="btn btn-warning w-100" onclick="uploadCSV()">⬆ Upload CSV</button>
+                  <button class="btn btn-info w-100" onclick="downloadSampleCSV()">⬇ Download Sample CSV</button>
+                  <button class="btn btn-outline-danger w-100" onclick="clearCSVUpload()">❌ Clear</button>
+                  <button class="btn btn-primary w-100" onclick="showCSVPreview('upload')" style="display:none;">👀 Preview CSV</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CSV Export Controls -->
+      <div class="accordion" id="exportCSVAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#exportCSVSection">
+              📂 Export Filtered CSV
+            </button>
+          </h2>
+          <div id="exportCSVSection" class="accordion-collapse collapse">
+            <div class="accordion-body">
+              <div class="mb-2">
+                <label for="exportLocation" class="form-label">📍 Location:</label>
+                <input type="text" id="exportLocation" class="form-control" placeholder="Enter location...">
+              </div>
+              <div class="mb-2">
+                <label for="exportDateRange" class="form-label">📅 Date Range:</label>
+                <input type="text" id="exportDateRange" class="form-control" placeholder="Pick a date range">
+              </div>
+              <div class="mb-2">
+                <label for="exportDataSource" class="form-label">🔗 Data Source:</label>
+                <select id="exportDataSource" class="form-select">
+                  <option value="">All Sources</option>
+                  <option value="manual">Manual Entry</option>
+                  <option value="csv">CSV Upload</option>
+                  <option value="api">Weather API</option>
+                  <option value="sensor">IoT Sensor</option>
+                </select>
+              </div>
+              <div class="d-grid gap-2">
+                <button class="btn btn-outline-danger w-100" onclick="clearExportFilters()">❌ Clear</button>
+                <button class="btn btn-success w-100" onclick="exportFilteredCSV()">⬇ Export CSV</button>
+                <button class="btn btn-primary w-100" onclick="previewExportData()">👀 Preview Data</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+   
+   
+    </div>
+    <!-- End Sidebar -->
+
+    <!-- Main Content: Tabs for Visualizations and Data Table -->
+    <div class="col-12 col-lg-9 mb-3">
+      <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="visualizations-tab" data-bs-toggle="tab" data-bs-target="#visualizations" type="button" role="tab" aria-controls="visualizations" aria-selected="true">
+            📊 Visualizations
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="dataTable-tab" data-bs-toggle="tab" data-bs-target="#dataTable" type="button" role="tab" aria-controls="dataTable" aria-selected="false">
+            Data Table
+          </button>
+        </li>
+      </ul>
+      <div class="tab-content" id="dashboardTabsContent">
+        <!-- Visualizations Tab -->
+        <div class="tab-pane fade show active p-3" id="visualizations" role="tabpanel" aria-labelledby="visualizations-tab">
+          <div class="card p-3 mb-3">
+            <div class="row gy-3">
+              <div class="col-12">
+                <h5>📊 Soil Data Insights</h5>
+                <hr>
+              </div>
+              <div class="col-12 col-md-6">
+                <label for="chartLocationFilter" class="form-label">Filter Chart by Location:</label>
+                <select id="chartLocationFilter" class="form-select" onchange="filterChartsByLocation()">
+                  <option value="all">All Locations</option>
+                </select>
+              </div>
+              <div class="col-12 col-md-6 d-flex align-items-end justify-content-md-end">
+                <div class="d-grid gap-2 d-md-flex">
+                  <button class="btn btn-secondary" onclick="downloadChart('soilTemperatureChart')">📥 Download Temp Chart</button>
+                  <button class="btn btn-secondary" onclick="downloadChart('soilTemperatureComparison')">📥 Download Location Chart</button>
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <canvas id="soilTemperatureChart" class="w-100" height="400"></canvas>
+              </div>
+              <div class="col-12 col-md-6">
+                <canvas id="soilTemperatureComparison" class="w-100" height="400"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Data Table Tab -->
+        <div class="tab-pane fade p-3" id="dataTable" role="tabpanel" aria-labelledby="dataTable-tab">
+          <div class="card p-3">
+            <h5>Soil Data Table</h5>
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered text-center">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Time</th>
+                    <th>Location</th>
+                    <th>Soil Temp (0-7cm)</th>
+                    <th>Soil Temp (7-28cm)</th>
+                    <th>Moisture</th>
+                    <th>pH Level</th>
+                    <th>Nitrogen</th>
+                    <th>Phosphorus</th>
+                    <th>Potassium</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Last Updated</th>
+                  </tr>
+                </thead>
+                <tbody id="soilDataTable">
+                  <!-- Data will be loaded here -->
+                </tbody>
+              </table>
+            </div>
+            <!-- Pagination Controls -->
+            <nav aria-label="Page navigation">
+              <ul class="pagination justify-content-center">
+                <li class="page-item" id="prevPageItem">
+                  <button class="page-link" id="prevBtn" onclick="loadPage(prevPageUrl)">Previous</button>
+                </li>
+                <li class="page-item disabled">
+                  <span class="page-link" id="pageInfo">Page 1</span>
+                </li>
+                <li class="page-item" id="nextPageItem">
+                  <button class="page-link" id="nextBtn" onclick="loadPage(nextPageUrl)">Next</button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- End Main Content -->
+  </div>
+</div>
+
+<!-- Floating Guide Button -->
+<button class="floating-btn" onclick="toggleGuide()">📖 Guide</button>
+
+<!-- Floating Panel for Guide -->
+<div id="guidePanel" class="floating-panel">
+  <div class="d-flex justify-content-between align-items-center p-3">
+    <h5 class="text-primary">📖 Soil Dashboard Guide</h5>
+    <button class="btn btn-sm btn-outline-danger" onclick="toggleGuide()">❌</button>
+  </div>
+  <ul class="list-group mb-3">
+    <li class="list-group-item"><strong>🔍 Search:</strong> Filter data by location &amp; date.</li>
+    <li class="list-group-item"><strong>📆 Quick Date Filters:</strong> "7D", "30D" buttons.</li>
+    <li class="list-group-item"><strong>📊 Visual Insights:</strong> Analyze temperature trends.</li>
+    <li class="list-group-item"><strong>📝 Manual Entry:</strong> Add soil data manually.</li>
+    <li class="list-group-item"><strong>📂 CSV Upload:</strong> Import bulk data from CSV.</li>
+    <li class="list-group-item"><strong>⬇ Export Data:</strong> Download filtered records.</li>
+    <li class="list-group-item"><strong>🌍 Fetch Live Data:</strong> Update from real-time sensors.</li>
+    <li class="list-group-item text-muted bg-light border-start border-danger ps-2">
+      🚀 <strong>Coming Soon:</strong>
+      <span data-bs-toggle="tooltip" title="⚠️ Soil Condition Alerts will notify you of sudden changes in moisture, pH, or nutrient levels, helping you take action before crop health is affected.">
+        ⚠️ Soil Condition Alerts
+        <i class="bi bi-info-circle text-primary"></i>
+      </span>
+    </li>
+  </ul>
+</div>
+
+<!-- Upload CSV Preview Modal -->
+<div class="modal fade" id="uploadCSVPreviewModal" tabindex="-1" aria-labelledby="uploadCSVPreviewModalLabel">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="uploadCSVPreviewModalLabel">🔍 Uploaded CSV Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Responsive Table -->
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+          <table id="csvUploadPreviewTable" class="table table-striped table-bordered">
+            <!-- Table data will be inserted here -->
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CSV Export Preview Modal -->
+<div class="modal fade" id="exportCsvPreviewModal" tabindex="-1" aria-labelledby="exportCsvPreviewModalLabel">
+  <div class="modal-dialog modal-dialog-centered modal-xl modal-fullscreen-sm-down">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exportCsvPreviewModalLabel">🔍 Export CSV Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table id="csvExportPreviewTable" class="table table-striped">
+            <!-- Data populated via JS -->
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+
+<!-- SweetAlert2 Integration -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  // Override the default alert with SweetAlert2
+  window.alert = function(message) {
+    // Blur the currently focused element to prevent aria-hidden issues
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur();
+    }
+    
+    let icon = 'info';
+    if (message.includes('❌')) {
+      icon = 'error';
+    } else if (message.includes('✅')) {
+      icon = 'success';
+    } else if (message.includes('⚠️')) {
+      icon = 'warning';
+    }
+    Swal.fire({
+      icon: icon,
+      text: message,
+      confirmButtonText: 'OK'
+    });
+  };
+  
+</script>
+
+<!-- Ensure that if a modal is hidden while one of its elements is focused, the focus is removed -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  // For Upload CSV Preview Modal:
+  var uploadModalEl = document.getElementById("uploadCSVPreviewModal");
+  if (uploadModalEl) {
+    uploadModalEl.addEventListener("hide.bs.modal", function () {
+      if (document.activeElement && uploadModalEl.contains(document.activeElement)) {
+        document.activeElement.blur();
+      }
+    });
+  }
+  // For Export CSV Preview Modal:
+  var exportModalEl = document.getElementById("exportCsvPreviewModal");
+  if (exportModalEl) {
+    exportModalEl.addEventListener("hide.bs.modal", function () {
+      if (document.activeElement && exportModalEl.contains(document.activeElement)) {
+        document.activeElement.blur();
+      }
+    });
+  }
+});
+</script>
+
+<script>
+  // Updated showCSVPreview function to reference the proper modal element.
+  function showCSVPreview(type) {
+    if (type === "upload") {
+        let previewModal = new bootstrap.Modal(document.getElementById("uploadCSVPreviewModal"));
+        previewModal.show();
+    } else if (type === "export") {
+        let previewModal = new bootstrap.Modal(document.getElementById("exportCsvPreviewModal"));
+        previewModal.show();
+    }
+  }
+
+  // Updated clearCSVUpload to remove non-existent element reference.
+  // It now resets the file input and clears the preview table content.
+  function clearCSVUpload() {
+    document.getElementById("csvFileInput").value = "";
+    document.getElementById("csvUploadPreviewTable").innerHTML = "";
+  }
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        flatpickr("#manualTime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true, defaultDate: new Date() });
+        flatpickr("#dateRange", { mode: "range", dateFormat: "Y-m-d" });
+        flatpickr("#exportDateRange", { mode: "range", dateFormat: "Y-m-d" });
+    });
+</script>
+
+<script>
+    function previewExportData() {
+        // Get filter values from the form inputs
+        let location = document.getElementById("exportLocation").value.trim();
+        let dateRange = document.getElementById("exportDateRange").value.split(" to ");
+        let startDate = dateRange[0] ? dateRange[0].trim() : "";
+        let endDate = dateRange[1] ? dateRange[1].trim() : "";
+        let dataSource = document.getElementById("exportDataSource").value;
+
+        // Build the API URL with query parameters
+        let url = `/soil/api/data/?location=${encodeURIComponent(location)}&start_date=${startDate}&end_date=${endDate}&data_source=${dataSource}&limit=10`;
+
+        // Fetch the data
+        fetch(url, {
+            method: "GET",
+            headers: {
+                "Authorization": `Token ${sessionStorage.getItem("authToken")}`,
+                "Content-Type": "application/json"
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.results || data.results.length === 0) {
+                alert("⚠️ No data found for the selected filters.");
+                return;
+            }
+
+            // Get the preview table and clear any previous content
+            let previewTable = document.getElementById("csvExportPreviewTable");
+            previewTable.innerHTML = "";
+
+            // Add table header
+            previewTable.innerHTML += `
+                <tr>
+                    <th>Time</th>
+                    <th>Location</th>
+                    <th>Temp (0-7cm)</th>
+                    <th>Temp (7-28cm)</th>
+                    <th>Moisture</th>
+                    <th>pH</th>
+                    <th>Nitrogen</th>
+                    <th>Phosphorus</th>
+                    <th>Potassium</th>
+                </tr>`;
+
+            // Loop through each result and append a row to the table
+            data.results.forEach(item => {
+                previewTable.innerHTML += `
+                    <tr>
+                        <td>${item.time}</td>
+                        <td>${item.location}</td>
+                        <td>${item.soil_temp_0_to_7cm}°C</td>
+                        <td>${item.soil_temp_7_to_28cm}°C</td>
+                        <td>${item.moisture}%</td>
+                        <td>${item.ph_level}</td>
+                        <td>${item.nitrogen}</td>
+                        <td>${item.phosphorus}</td>
+                        <td>${item.potassium}</td>
+                    </tr>`;
+            });
+
+            // Initialize and show the Bootstrap modal
+            let previewModal = new bootstrap.Modal(document.getElementById("exportCsvPreviewModal"), {});
+            previewModal.show();
+        })
+        .catch(error => {
+            console.error("Error previewing data:", error);
+            alert("❌ Failed to fetch preview data.");
+        });
+    }
+
+    function exportCSV() {
+        let location = document.getElementById("locationFilter").value.trim();
+        let dateRange = document.getElementById("dateRange").value.split(" to ");
+        let startDate = dateRange[0] ? dateRange[0].trim() : "";
+        let endDate = dateRange[1] ? dateRange[1].trim() : "";
+
+        // Validate date format (YYYY-MM-DD)
+        if (startDate && !/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+            alert("❌ Invalid start date format. Use YYYY-MM-DD.");
+            return;
+        }
+        if (endDate && !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+            alert("❌ Invalid end date format. Use YYYY-MM-DD.");
+            return;
+        }
+
+        // Warn user if filters are empty
+        if (!location && !startDate && !endDate) {
+            let confirmExport = confirm("⚠️ You did not select any filters. Do you want to export all data?");
+            if (!confirmExport) return;
+        }
+
+        // Send request to export API
+        let url = `/soil/api/export/?location=${location}&start_date=${startDate}&end_date=${endDate}`;
+        window.location.href = url;
+    }
+
+    function downloadSampleCSV() {
+        window.location.href = "/soil/api/download-sample-csv/";
+    }
+
+    function exportFilteredCSV() {
+        let location = document.getElementById("exportLocation").value.trim();
+        let dateRange = document.getElementById("exportDateRange").value.split(" to ");
+        let startDate = dateRange[0] || "";
+        let endDate = dateRange[1] || "";
+        let dataSource = document.getElementById("exportDataSource").value;
+
+        let url = "/soil/api/export/?";
+
+        if (location) url += `location=${encodeURIComponent(location)}&`;
+        if (startDate) url += `start_date=${startDate}&`;
+        if (endDate) url += `end_date=${endDate}&`;
+        if (dataSource) url += `data_source=${dataSource}&`;
+
+        // Remove trailing "&"
+        url = url.slice(0, -1);
+
+        // Warn user if filters are empty
+        if (!location && !startDate && !endDate) {
+            alert("⚠️ You must select at least a location or date range.");
+            return;
+        }
+
+        console.log("Exporting with URL:", url);
+
+        fetch(url, {
+            method: "GET",
+            headers: {
+                "Authorization": `Token ${sessionStorage.getItem("authToken")}`
+            }
+        })
+            .then(response => {
+                if (response.headers.get("Content-Type").includes("application/json")) {
+                    // Handle error response (JSON)
+                    return response.json().then(data => {
+                        if (data.status === "empty") {
+                            alert("⚠️ No data found for the selected filters.");
+                        } else {
+                            alert(`❌ ${data.message}`);
+                        }
+                        throw new Error("No CSV file generated.");
+                    });
+                } else {
+                    // Handle successful CSV response
+                    return response.blob();
+                }
+            })
+            .then(blob => {
+                if (!blob) return;
+                // Create a temporary link to download the CSV file
+                let url = window.URL.createObjectURL(blob);
+                let a = document.createElement("a");
+                a.href = url;
+                a.download = "soil_data_filtered.csv";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error("❌ Error exporting CSV:", error);
+                alert("❌ Failed to export CSV. Try again.");
+            });
+    }
+
+    function submitManualData() {
+        let token = sessionStorage.getItem("authToken");
+        if (!token) {
+            alert("Authentication token not found. Please log in.");
+            return;
+        }
+
+        let userTime = document.getElementById("manualTime").value;
+        if (!userTime) {
+            userTime = new Date().toISOString();
+        } else {
+            userTime = new Date(userTime).toISOString();
+        }
+
+        let locationName = document.getElementById("manualLocation").value;
+        if (!locationName) {
+            alert("Please enter a valid location.");
+            return;
+        }
+
+        // Fetch Latitude & Longitude automatically
+        geocodeLocation(locationName).then(coords => {
+            if (!coords) {
+                alert("Failed to retrieve latitude and longitude for this location. Please try again.");
+                return;
+            }
+
+            let formData = {
+                time: userTime,
+                location: locationName,
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+                soil_temp_0_to_7cm: parseFloat(document.getElementById("manualTemp0to7").value),
+                soil_temp_7_to_28cm: parseFloat(document.getElementById("manualTemp7to28").value),
+                moisture: parseFloat(document.getElementById("manualMoisture").value),
+                ph_level: parseFloat(document.getElementById("manualPH").value),
+                nitrogen: parseFloat(document.getElementById("manualNitrogen").value),
+                phosphorus: parseFloat(document.getElementById("manualPhosphorus").value),
+                potassium: parseFloat(document.getElementById("manualPotassium").value),
+            };
+
+            console.log("Submitting Data:", formData);
+
+            fetch("/soil/api/manual-entry/", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Token ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(formData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Server Response:", data);
+                    alert(data.message || "Manual data added successfully!");
+                    fetchSoilData();
+                })
+                .catch(error => {
+                    console.error("Error submitting manual data:", error);
+                    alert("Failed to submit manual data.");
+                });
+        });
+    }
+
+    // Fetch latitude & longitude using OpenCage API via backend
+    function geocodeLocation(locationName) {
+      return fetch(`/soil/api/geocode/?location=${encodeURIComponent(locationName)}`)
+          .then(response => response.json())
+          .then(data => {
+              if (data.status === "success" && data.latitude && data.longitude) {
+                  return {
+                      latitude: data.latitude,
+                      longitude: data.longitude
+                  };
+              } else {
+                  alert("❌ Location not found! Please enter latitude and longitude manually.");
+                  return null;
+              }
+          })
+          .catch(error => {
+              console.error("Geocoding error:", error);
+              alert("❌ Error retrieving location. Try again.");
+              return null;
+          });
+    }
+
+    function previewCSV(file) {
+        let reader = new FileReader();
+        reader.onload = function (e) {
+            let csv = e.target.result;
+            let rows = csv.split("\n").map(row => row.split(",").map(cell => cell.trim()));
+    
+            let table = document.getElementById("csvUploadPreviewTable");
+            table.innerHTML = ""; // Clear previous data
+    
+            if (rows.length > 1) {
+                let headers = rows[0].map(header => header.toLowerCase());
+                let expectedHeaders = ["time", "location", "soil_temp_0_to_7cm", "soil_temp_7_to_28cm", "moisture",
+                    "ph_level", "latitude", "longitude", "nitrogen", "phosphorus", "potassium"
+                ];
+    
+                let missingHeaders = expectedHeaders.filter(h => !headers.includes(h));
+                if (missingHeaders.length > 0) {
+                    alert(`❌ Missing columns in CSV: ${missingHeaders.join(", ")}`);
+                    return;
+                }
+    
+                // Render Table Headers
+                let headerRow = "<thead class='table-dark'><tr>" + headers.map(header => `<th>${header}</th>`).join("") + "</tr></thead>";
+                table.innerHTML += headerRow;
+    
+                // Render Table Rows
+                let tbody = "<tbody>";
+                rows.slice(1).forEach(row => {
+                    if (row.length < headers.length) return;
+                    let rowHtml = "<tr>";
+                    row.forEach(cell => rowHtml += `<td>${cell}</td>`);
+                    rowHtml += "</tr>";
+                    tbody += rowHtml;
+                });
+                tbody += "</tbody>";
+                table.innerHTML += tbody;
+    
+                // Show the modal
+                let previewModal = new bootstrap.Modal(document.getElementById("uploadCSVPreviewModal"));
+                previewModal.show();
+            }
+        };
+        reader.readAsText(file);
+    }
+    
+    function uploadCSV() {
+      let fileInput = document.getElementById("csvFileInput");
+      let file = fileInput.files[0];
+      if (!file) {
+        alert("❌ Please select a CSV file.");
+        return;
+      }
+    
+      let formData = new FormData();
+      formData.append("file", file);
+    
+      fetch("/soil/api/upload-csv/", {
+        method: "POST",
+        headers: {
+          "Authorization": `Token ${sessionStorage.getItem("authToken")}`
+        },
+        body: formData
+      })
+      .then(response => response.json())
+      .then(result => {
+        // 1) Hide the preview modal if it is open:
+        const modalEl = document.getElementById("uploadCSVPreviewModal");
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) {
+          modalInstance.hide();
+        }
+    
+        // 2) Then call your SweetAlert
+        if (result.status === "error") {
+          alert("⚠️ Upload failed: " + result.message);
+        } else {
+          alert("✅ CSV uploaded successfully!");
+          fetchSoilData();
+        }
+      })
+      .catch(error => {
+        console.error("Error uploading CSV:", error);
+        alert("❌ Failed to upload CSV. Check console for details.");
+      });
+    }
+    
+    let temperatureChart, temperatureComparisonChart; // Global chart variables
+    let allSoilData = []; // Store all fetched data globally
+
+    function updateCharts(filteredData = allSoilData) {
+        Chart.defaults.devicePixelRatio = 2;
+        if (filteredData.length === 0) return;
+        // Temperature trends data
+        const timestamps = filteredData.map(item => new Date(item.time).toLocaleDateString());
+        const temp0to7cm = filteredData.map(item => item.soil_temp_0_to_7cm);
+        const temp7to28cm = filteredData.map(item => item.soil_temp_7_to_28cm);
+
+        // Update dropdown for location filter
+        const locationNames = [...new Set(filteredData.map(item => item.location))];
+        const locationDropdown = document.getElementById("chartLocationFilter");
+        locationDropdown.innerHTML = '<option value="all">All Locations</option>';
+        locationNames.forEach(location => {
+          locationDropdown.innerHTML += `<option value="${location}">${location}</option>`;
+        });
+        const avgTempByLocation = locationNames.map(location => {
+            const locationData = filteredData.filter(item => item.location === location);
+            return locationData.reduce((sum, record) => sum + record.soil_temp_0_to_7cm, 0) / locationData.length;
+        });
+        // Line Chart: Soil Temperature Over Time
+        const ctx1 = document.getElementById('soilTemperatureChart').getContext('2d');
+        if (temperatureChart) temperatureChart.destroy();
+        temperatureChart = new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: timestamps,
+                datasets: [{
+                    label: 'Soil Temp (0-7cm)',
+                    data: temp0to7cm,
+                    borderColor: 'blue',
+                    borderWidth: 2,
+                    fill: false,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                },
+                {
+                    label: 'Soil Temp (7-28cm)',
+                    data: temp7to28cm,
+                    borderColor: 'red',
+                    borderWidth: 2,
+                    fill: false,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                animation: { duration: 1200 },
+                plugins: { tooltip: { enabled: true }, legend: { position: 'top' } },
+                scales: {
+                    x: { title: { display: true, text: 'Date' } },
+                    y: { title: { display: true, text: 'Temperature (°C)' } }
+                }
+            }
+        });
+        // Bar Chart: Average Soil Temperature by Location
+        const ctx2 = document.getElementById('soilTemperatureComparison').getContext('2d');
+        if (temperatureComparisonChart) temperatureComparisonChart.destroy();
+        temperatureComparisonChart = new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: locationNames,
+                datasets: [{
+                    label: 'Avg Soil Temp (0-7cm)',
+                    data: avgTempByLocation,
+                    backgroundColor: 'green',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                animation: { duration: 1000 },
+                plugins: { tooltip: { enabled: true }, legend: { position: 'top' } },
+                scales: {
+                    x: { title: { display: true, text: 'Location' } },
+                    y: { title: { display: true, text: 'Temperature (°C)' } }
+                }
+            }
+        });
+    }
+
+    let currentPage = 1;
+    let nextPageUrl = null;
+    let prevPageUrl = null;
+
+    function fetchSoilData(pageUrl = null) {
+        let location = document.getElementById("locationFilter").value;
+        let dateRange = document.getElementById("dateRange").value.split(" to ");
+        let startDate = dateRange[0] || "";
+        let endDate = dateRange[1] || "";
+        let url = pageUrl || `/soil/api/data/?location=${location}&start_date=${startDate}&end_date=${endDate}&page=1`;
+        let token = sessionStorage.getItem("authToken");
+        if (!token) {
+            alert("No authentication token found. Please log in again.");
+            return;
+        }
+        fetch(url, {
+            method: "GET",
+            headers: {
+                "Authorization": `Token ${token}`,
+                "Content-Type": "application/json"
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.results || data.results.length === 0) {
+                    alert("No soil data found for the selected filters.");
+                    return;
+                }
+                allSoilData = data.results;
+                updateTable(data.results);
+                updateCharts(data.results);
+                nextPageUrl = data.next;
+                prevPageUrl = data.previous;
+                currentPage = data.current_page;
+                updatePaginationControls();
+            })
+            .catch(error => {
+                console.error("Error fetching soil data:", error);
+                alert("Failed to load soil data. Check console for details.");
+            });
+    }
+
+    function updatePaginationControls() {
+        document.getElementById("pageInfo").innerText = `Page ${currentPage}`;
+        document.getElementById("prevPageItem").classList.toggle("disabled", !prevPageUrl);
+        document.getElementById("nextPageItem").classList.toggle("disabled", !nextPageUrl);
+        document.getElementById("prevBtn").disabled = !prevPageUrl;
+        document.getElementById("nextBtn").disabled = !nextPageUrl;
+    }
+
+    function loadPage(url) { if(url) fetchSoilData(url); }
+
+    function filterChartsByLocation() {
+        let selectedLocation = document.getElementById("chartLocationFilter").value;
+        if (selectedLocation === "all") updateCharts(allSoilData);
+        else {
+            let filteredData = allSoilData.filter(item => item.location === selectedLocation);
+            updateCharts(filteredData);
+        }
+    }
+
+    function downloadChart(chartId) {
+        const canvas = document.getElementById(chartId);
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png', 1.0);
+        link.download = chartId + '.png';
+        link.click();
+    }
+
+    function quickFilterLast7Days() {
+        let today = new Date();
+        let sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(today.getDate() - 7);
+        let formattedStartDate = sevenDaysAgo.toISOString().split('T')[0];
+        let formattedEndDate = today.toISOString().split('T')[0];
+        document.getElementById("dateRange").value = `${formattedStartDate} to ${formattedEndDate}`;
+        console.log(`Applying Last 7 Days Filter: ${formattedStartDate} to ${formattedEndDate}`);
+        fetchSoilData();
+    }
+
+    function clearFilters() {
+        document.getElementById("locationFilter").value = "";
+        document.getElementById("dateRange").value = "";
+        console.log("Filters cleared. User can now set new filters.");
+    }
+
+    function clearManualEntry() {
+        document.getElementById("manualTime").value = "";
+        document.getElementById("manualLocation").value = "";
+        document.getElementById("manualTemp0to7").value = "";
+        document.getElementById("manualTemp7to28").value = "";
+        document.getElementById("manualMoisture").value = "";
+        document.getElementById("manualPH").value = "";
+        document.getElementById("manualNitrogen").value = "";
+        document.getElementById("manualPhosphorus").value = "";
+        document.getElementById("manualPotassium").value = "";
+    }
+
+    // Updated clearCSVUpload: removed reference to non-existent "csvPreviewContainer"
+    function clearCSVUpload() {
+        document.getElementById("csvFileInput").value = "";
+        document.getElementById("csvUploadPreviewTable").innerHTML = "";
+    }
+
+    function clearExportFilters() {
+        document.getElementById("exportLocation").value = "";
+        document.getElementById("exportDateRange").value = "";
+        document.getElementById("exportDataSource").selectedIndex = 0;
+    }
+
+    function getPageNumber(url) {
+        let params = new URLSearchParams(url.split('?')[1]);
+        return params.get("page") ? parseInt(params.get("page")) : 1;
+    }
+
+    function fetchLiveSoilData() {
+        let locationName = document.getElementById("locationFilter").value;
+        if (!locationName) {
+            alert("Please enter a location to fetch live data.");
+            return;
+        }
+        let token = sessionStorage.getItem("authToken");
+        let csrftoken = getCSRFToken();
+        console.log("Fetching live soil data for:", locationName);
+        fetch("/soil/api/fetch/", {
+            method: "POST",
+            headers: {
+                "Authorization": `Token ${token}`,
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrftoken
+            },
+            body: JSON.stringify({ location_name: locationName })
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Live Fetch Response:", data);
+                alert(data.message || "Live data fetched successfully!");
+                fetchSoilData();
+            })
+            .catch(error => {
+                console.error("Error fetching live soil data:", error);
+                alert("Failed to fetch live soil data. Check console for details.");
+            });
+    }
+
+    function updateTable(data) {
+        let tableBody = document.getElementById("soilDataTable");
+        tableBody.innerHTML = "";
+        data.forEach(item => {
+            let row = `<tr>
+                <td>${item.time}</td>
+                <td>${item.location}</td>
+                <td>${item.soil_temp_0_to_7cm}°C</td>
+                <td>${item.soil_temp_7_to_28cm}°C</td>
+                <td>${item.moisture}%</td>
+                <td>${item.ph_level}</td>
+                <td>${item.nitrogen}</td>
+                <td>${item.phosphorus}</td>
+                <td>${item.potassium}</td>
+                <td>${item.latitude}</td>
+                <td>${item.longitude}</td>
+                <td>${item.last_updated}</td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+    }
+
+    // Function to get CSRF token from cookies
+    function getCSRFToken() {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+            let cookies = document.cookie.split(";");
+            for (let i = 0; i < cookies.length; i++) {
+                let cookie = cookies[i].trim();
+                if (cookie.startsWith("csrftoken=")) {
+                    cookieValue = cookie.substring("csrftoken=".length, cookie.length);
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+
+<!-- Floating Guide Button Styles and Toggle Script -->
+<style>
+    .floating-btn {
+        position: fixed;
+        bottom: 200px;
+        right: 30px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 100px;
+        height: 100px;
+        font-size: 22px;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transition: background-color 0.3s ease;
+        z-index: 1050;
+    }
+    .floating-btn:hover {
+        background-color: #0056b3;
+    }
+    .floating-panel {
+        position: fixed;
+        bottom: 300px;
+        right: 20px;
+        width: 280px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0px 4px 12px rgba(0,0,0,0.2);
+        padding: 15px;
+        display: none;
+        z-index: 1050;
+    }
+</style>
+  
+<script>
+    function toggleGuide() {
+        let panel = document.getElementById("guidePanel");
+        panel.style.display = (panel.style.display === "none" || panel.style.display === "") ? "block" : "none";
+    }
+    document.addEventListener("DOMContentLoaded", function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

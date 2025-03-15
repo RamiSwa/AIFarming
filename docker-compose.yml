@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: django_app_fresh
+    command: gunicorn farming_ai.wsgi:application --bind 0.0.0.0:8000  # ✅ Use Gunicorn for production
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./trained_models:/app/trained_models
+      - ./media:/app/media
+    depends_on:
+      - database
+      - cache
+    env_file:
+      - .env  # ✅ Load environment variables
+    restart: always  # ✅ Auto-restart if it crashes
+
+  database:
+    image: postgres:13
+    container_name: postgres_db_fresh
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_fresh_data:/var/lib/postgresql/data
+    env_file:
+      - .env  # ✅ Use .env instead of hardcoding
+    restart: always  # ✅ Auto-restart on failure
+
+  cache:
+    image: redis:latest
+    container_name: redis_cache_fresh
+    ports:
+      - "6380:6379"
+    restart: always  # ✅ Ensure Redis stays running
+
+  celery:
+    build: .
+    container_name: celery_worker_fresh
+    command: celery -A farming_ai worker --loglevel=info --concurrency=2
+    volumes:
+      - .:/app
+      - ./trained_models:/app/trained_models
+      - ./media:/app/media
+    depends_on:
+      - web
+      - database
+      - cache
+    env_file:
+      - .env  # ✅ Use .env
+    restart: always  # ✅ Auto-restart on crash
+
+# Define shared volumes
+volumes:
+  postgres_fresh_data:
+  media:

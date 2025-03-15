@@ -1,0 +1,27 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+<h2>Admin Login</h2>
+
+<!-- Debugging: Show the reCAPTCHA Key -->
+<p>reCAPTCHA Public Key: {{ RECAPTCHA_PUBLIC_KEY }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.captcha }} 
+    <label for="username">Username:</label>
+    <input type="text" name="username" required>
+
+    <label for="password">Password:</label>
+    <input type="password" name="password" required>
+
+    <!-- reCAPTCHA -->
+    <div class="g-recaptcha" data-sitekey="{{ RECAPTCHA_PUBLIC_KEY }}"></div>
+
+    <button type="submit" class="btn btn-primary">Login</button>
+</form>
+
+<!-- Load reCAPTCHA -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+{% endblock %}

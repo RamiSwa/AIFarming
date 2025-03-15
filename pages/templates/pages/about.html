@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %}About Us - AI Farming{% endblock %}
+{% block content %}
+
+<!-- HERO SECTION -->
+<section class="hero-section text-center text-light py-5" style="
+    background: url('/static/images/about_banner.jpg') no-repeat center center/cover;
+    position: relative;">
+    <div class="overlay" style="
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.5);"></div>
+    <div class="container position-relative">
+        <h1 class="fw-bold display-4">{{ about_page.title }}</h1>
+        <p class="lead fw-light">Empowering farmers with AI-driven insights for a smarter future.</p>
+    </div>
+</section>
+
+<!-- MISSION & VISION SECTION -->
+<section class="container mt-5">
+    <div class="row g-5 align-items-start">
+        <div class="col-md-6">
+            <h2 class="text-primary"><i class="fas fa-bullseye"></i> Our Mission</h2>
+            <p class="fs-5">{{ about_page.mission_statement|linebreaks }}</p>
+        </div>
+        <div class="col-md-6">
+            <h2 class="text-success"><i class="fas fa-lightbulb"></i> Our Vision</h2>
+            <p class="fs-5">{{ about_page.vision_statement|linebreaks }}</p>
+        </div>
+    </div>
+</section>
+
+<!-- WHY AI FARMING SECTION -->
+<section class="container mt-5 bg-light p-5 rounded shadow why-ai-box"  style="padding: 40px;">
+    <h2 class="text-center text-info">🚜 Why AI Farming?</h2>
+    <p class="text-center">{{ about_page.why_ai_farming|linebreaks }}</p>
+</section>
+
+<!-- FOUNDER SECTION -->
+<!-- FOUNDER SECTION -->
+<section class="container mt-5">
+    <div class="row align-items-center g-4">
+        <div class="col-md-4 text-center">
+            {% if about_page.founder_image %}
+                <img src="{{ about_page.founder_image.url }}" class="img-fluid rounded-circle shadow-lg animate-fade mx-auto d-block founder-image" alt="{{ about_page.founder_name }}">
+            {% else %}
+                <img src="/static/images/default-founder.png" class="img-fluid rounded-circle shadow-lg animate-fade mx-auto d-block" alt="Founder">
+            {% endif %}
+        </div>
+        <div class="col-md-8">
+            <h2 class="text-primary"><i class="fas fa-user-tie"></i> About the Founder</h2>
+            <p class="fw-bold fs-4">{{ about_page.founder_name }}</p>
+
+            <!-- Automatically Splitting Bio Into Paragraphs -->
+            {% for paragraph in about_page.founder_bio.splitlines %}
+                {% if "Degree" in paragraph %}
+                    <p class="mb-3"><i class="fas fa-graduation-cap text-info"></i> {{ paragraph }}</p>
+                {% elif "Developer" in paragraph or "AI" in paragraph %}
+                    <p class="mb-4"><i class="fas fa-code text-success"></i> {{ paragraph }}</p>
+                {% elif "Innovation" in paragraph or "Technology" in paragraph %}
+                    <p class="mb-3"><i class="fas fa-lightbulb text-warning"></i> {{ paragraph }}</p>
+                {% elif paragraph.strip %}  {# Only display non-empty paragraphs #}
+                    <p class="mb-3"><i class="fas fa-quote-left text-secondary"></i> {{ paragraph }}</p>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- CALL TO ACTION SECTION -->
+<section class="container mt-5 text-center p-5 rounded bg-light shadow cta-box">
+    <h2 class="text-success mb-4">Join Us in Revolutionizing Agriculture with AI</h2>
+    <p class="lead mb-4">Be part of our mission to empower farmers with real-time, data-driven insights. Together, we can shape the future of agriculture.</p>
+    <a href="{% url 'contact_page' %}" class="btn btn-primary btn-lg">Get in Touch</a>
+</section>
+
+
+<style>
+    .animate-fade {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 1s ease-out forwards;
+    }
+
+    @keyframes fadeInUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .founder-image {
+        margin-bottom: 20px;
+    }
+    
+    .btn-lg:hover {
+        transform: scale(1.05);
+        transition: all 0.3s ease-in-out;
+    }
+    .btn-primary {
+        padding: 12px 24px;
+        font-size: 18px;
+    }
+    .btn-primary:hover {
+        background-color: #0056b3; /* Slightly darker shade on hover */
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    .why-ai-box {
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    .cta-box {
+        border-radius: 10px;
+    }
+    
+    @media (max-width: 768px) {
+        .founder-image {
+            display: block;
+            margin: 0 auto 20px;
+        }
+    }
+    
+    
+</style>
+{% endblock %}

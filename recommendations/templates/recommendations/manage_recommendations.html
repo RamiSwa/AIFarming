@@ -1,0 +1,914 @@
+
+
+{% extends 'recommendations/recommendations.html' %}
+{% block title %}Manage Recommendations | AI Farming{% endblock %}
+<style>
+  /* ✅ Make Tabs Wrap on Small Screens */
+  @media (max-width: 768px) {
+    .nav-tabs {
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+    }
+  }
+
+  /* ✅ Ensure Charts Scale Properly */
+  .card-body canvas {
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* ✅ Make Tables Scrollable on Small Screens */
+  .table-responsive {
+    overflow-x: auto !important;
+  }
+
+  /* ✅ Ensure Filters Fit Small Screens */
+  .form-select,
+  .form-control {
+    width: 100% !important;
+  }
+
+  /* ✅ Prevent Overflowing Text in AI Model Version */
+  .badge.bg-info {
+    white-space: normal !important;
+    word-break: break-word !important;
+    max-width: 100% !important;
+  }
+
+  /* ✅ Fix Modal for Small Screens */
+  .modal-dialog {
+    max-width: 90% !important;
+  }
+
+  /* ✅ Ensure Buttons and Inputs Fit */
+  .btn,
+  .form-select,
+  .form-control {
+    width: 100% !important;
+  }
+</style>
+
+{% block recommendations_content %}
+<main class="container-fluid my-3 px-2">
+  <!-- Page Header -->
+  <header class="mb-3 text-center">
+    <h4 class="display-5">Manage Recommendations</h4>
+    <p class="text-muted">View and manage your saved recommendations.</p>
+  </header>
+
+
+  <!-- Navigation Tabs: Charts, Table, Map -->
+  <ul class="nav nav-tabs mb-3 d-flex justify-content-center" id="viewTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="charts-tab" data-bs-toggle="tab" data-bs-target="#charts" type="button" role="tab">Charts</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="table-tab" data-bs-toggle="tab" data-bs-target="#table" type="button" role="tab">Table</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="map-tab" data-bs-toggle="tab" data-bs-target="#map" type="button" role="tab">Map</button>
+    </li>
+  </ul>
+
+
+
+  <!-- Charts Section -->
+  <div class="tab-content" id="viewTabsContent">
+    <!-- Charts Section -->
+    <div class="tab-pane fade show active" id="charts" role="tabpanel">
+      <section class="mb-4">
+        <div class="row">
+          <div class="col-md-6 col-12 mb-4">
+            <div class="card shadow-sm">
+              <div class="card-header"><h5>Soil Temperature Trends</h5></div>
+              <div class="card-body"><canvas id="temperatureTrendsChart"></canvas></div>
+            </div>
+          </div>
+          <div class="col-md-6 col-12 mb-4">
+            <div class="card shadow-sm">
+              <div class="card-header"><h5>Predicted Yield per Crop</h5></div>
+              <div class="card-body"><canvas id="predictedYieldChart"></canvas></div>
+            </div>
+          </div>
+          <div class="col-12 mb-4">
+            <div class="card shadow-sm">
+              <div class="card-header"><h5>Weather Conditions vs. Suitability</h5></div>
+              <div class="card-body"><canvas id="weatherSuitabilityChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+
+
+  <!-- Saved Recommendations Table -->
+  <div class="tab-pane fade" id="table" role="tabpanel" aria-labelledby="table-tab">
+<section class="card shadow-sm p-4 mb-4">
+  <h4 class="card-title mb-3">📋 Saved Recommendations</h4>
+
+  <!-- Filters -->
+  <div class="row g-3 mb-3">
+      <div class="col-md-4">
+          <label for="filterCrop" class="form-label">Crop</label>
+          <select id="filterCrop" class="form-select">
+              <option value="">All Crops</option>
+          </select>
+      </div>
+      <div class="col-md-4">
+          <label for="filterRisk" class="form-label">Risk Level</label>
+          <select id="filterRisk" class="form-select">
+              <option value="">All Levels</option>
+              <option value="Low risk">🟢 Low</option>
+              <option value="Medium risk">🟡 Medium</option>
+              <option value="High risk">🔴 High</option>
+          </select>
+      </div>
+      <div class="col-md-4">
+          <label for="filterDate" class="form-label">Date Range</label>
+          <div class="input-group">
+            <input type="text" id="filterDate" class="form-control" placeholder="Select date range" readonly>
+            <button id="filterBtn" class="btn btn-outline-secondary m-lg-2" type="button">Filter</button>
+          </div>
+        </div>
+  </div>
+  
+
+  <div class="table-responsive">
+      <table class="table table-striped align-middle" id="recommendationsTable">
+          <thead>
+              <tr>
+                  <th>Crop 🌾</th>
+                  <th>Predicted Yield 📊</th>
+                  <th>Expected Yield 📊</th>
+                  <th>Risk Level 🔴🟡🟢</th>
+                  <th>Optimal Planting Time ⏳</th>
+                  <th>Created At 🗓️</th>
+                  <th>Actions</th>
+              </tr>
+          </thead>
+          <tbody></tbody>
+      </table>
+  </div>
+
+  <!-- Pagination Controls (your existing pagination code) -->
+  <div class="d-flex justify-content-center mt-3 ">
+      <nav>
+        <ul class="pagination"></ul>
+      </nav>
+    </div>
+</section>
+</div>
+
+    <!-- Map Tab (Placeholder) -->
+    <div class="tab-pane fade" id="map" role="tabpanel" aria-labelledby="map-tab">
+      <section class="card shadow-sm p-4 mb-4">
+        <h4 class="card-title">Map View</h4>
+        <div class="text-center py-5">
+          <!-- Replace the following with your actual map component -->
+          <p class="lead">Map view coming soon...</p>
+        </div>
+      </section>
+    </div>
+
+    
+<!-- View Recommendation Modal -->
+<div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="viewModalLabel">Recommendation Details</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" id="modalBody"></div>
+      </div>
+  </div>
+</div>
+</main>
+
+{% endblock recommendations_content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Your JavaScript code for fetching recommendations, applying filters,
+// populating the table, and handling pagination goes here.
+
+document.addEventListener("DOMContentLoaded", function () {
+  const token = sessionStorage.getItem("authToken");
+  const csrftoken = getCookie("csrftoken");
+  let currentRecommendationData = null; // Store recommendation data
+  const recommendationsTable = document.querySelector("#recommendationsTable tbody");
+  const pagination = document.querySelector(".pagination");
+  const filterCrop = document.getElementById("filterCrop");
+  const filterRisk = document.getElementById("filterRisk");
+  const filterDateElem = document.getElementById("filterDate");
+  const filterBtn = document.getElementById("filterBtn");
+  let recommendationsData = [];
+
+
+
+  // Initialize flatpickr for filter date range (table)
+  flatpickr("#filterDate", { mode: "range", dateFormat: "Y-m-d" });
+  // Initialize flatpickr for export date range
+  flatpickr("#exportDateRange", { mode: "range", dateFormat: "Y-m-d" });
+
+
+  // When the filter button is clicked, or when crop or risk changes, trigger filtering:
+  filterBtn.addEventListener("click", filterRecommendations);
+  filterCrop.addEventListener("change", filterRecommendations);
+  filterRisk.addEventListener("change", filterRecommendations);
+
+
+
+  // -------------------------------
+  // CHARTS: Functions to fetch and render charts
+  // -------------------------------
+
+  let tempTrendsChart, yieldChart, weatherChart;
+
+  // Only fetch crop colors if they haven't been loaded yet
+  let cropColorsLoaded = false; 
+  let cropColors = {}; // Store dynamically assigned colors
+
+  // Fetch crop colors dynamically from the backend
+  function fetchCropColors() {
+    if (cropColorsLoaded) return; // Don't fetch again if already loaded
+    console.log("Fetching Crop Colors...");
+    fetch("/recommendations/api/crops/", { headers: { "Authorization": `Token ${sessionStorage.getItem("authToken")}` } })
+    .then(response => response.json())
+    .then(data => {
+        cropColors = data.colors || {}; // Save crop colors dynamically
+        cropColorsLoaded = true; // Mark as loaded
+        console.log("Fetched Crop Colors:", cropColors);
+        refreshCharts(); // Reload charts after fetching colors
+    })
+    .catch(error => console.error("Error fetching crop colors:", error));
+}
+  
+  // Function to get the color for a given crop
+  function getCropColor(crop) {
+      return cropColors[crop] || "rgb(128, 128, 128)"; // Default to gray if color not found
+  }
+  
+  function fetchTemperatureTrendsChartData() {
+    let url = `/recommendations/api/charts/temperature-trends/?`;
+    // Append filters (crop, risk, date range) if needed – similar to table filtering:
+    const cropValue = document.getElementById("filterCrop").value;
+    if(cropValue) url += `&crop=${encodeURIComponent(cropValue)}`;
+    const riskValue = document.getElementById("filterRisk").value;
+    if(riskValue) url += `&risk=${encodeURIComponent(riskValue)}`;
+    const dateRange = document.getElementById("filterDate").value;
+    if(dateRange) {
+      const dates = dateRange.split(" to ");
+      if(dates.length === 2) {
+        url += `&start_date=${encodeURIComponent(dates[0])}&end_date=${encodeURIComponent(dates[1])}`;
+      }
+    }
+    fetch(url, { headers: { "Authorization": `Token ${token}` } })
+      .then(response => response.json())
+      .then(data => renderTemperatureTrendsChart(data))
+      .catch(error => console.error("Error fetching temperature trends:", error));
+  }
+
+  function renderTemperatureTrendsChart(chartData) {
+    const ctx = document.getElementById('temperatureTrendsChart').getContext('2d');
+    // If chart exists, destroy it before re-rendering
+    if(tempTrendsChart) tempTrendsChart.destroy();
+
+    const datasets = chartData.datasets.map(ds => {
+      return {
+        label: ds.crop,
+        data: ds.data,
+        borderColor: getCropColor(ds.crop), // Use dynamically assigned color
+        fill: false,
+        tension: 0.3,
+        // You could include optimal range info in tooltips if needed:
+        optimal_min: ds.optimal_min,
+        optimal_max: ds.optimal_max
+      };
+    });
+
+
+    tempTrendsChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+          labels: chartData.labels,
+          datasets: datasets
+      },
+      options: {
+          responsive: true,
+          plugins: {
+              tooltip: {
+                  callbacks: {
+                    afterLabel: (context) => {
+                      const ds = context.dataset;
+                      let minTemp = ds.optimal_min ?? "N/A";
+                      let maxTemp = ds.optimal_max ?? "N/A";
+                      return `Optimal Range: ${minTemp}°C - ${maxTemp}°C`;
+                  }
+                  }
+              },
+              title: {
+                  display: true,
+                  text: 'Soil Temperature Trends'
+              }
+          },
+          scales: {
+              y: { title: { display: true, text: 'Temperature (°C)' } },
+              x: { title: { display: true, text: 'Date' } }
+          }
+      }
+  });
+}
+
+
+  function fetchPredictedYieldChartData() {
+    let url = `/recommendations/api/charts/predicted-yield/?`;
+    // Append filters similarly:
+    const cropValue = document.getElementById("filterCrop").value;
+    if(cropValue) url += `&crop=${encodeURIComponent(cropValue)}`;
+    const riskValue = document.getElementById("filterRisk").value;
+    if(riskValue) url += `&risk=${encodeURIComponent(riskValue)}`;
+    const dateRange = document.getElementById("filterDate").value;
+    if(dateRange) {
+      const dates = dateRange.split(" to ");
+      if(dates.length === 2) {
+        url += `&start_date=${encodeURIComponent(dates[0])}&end_date=${encodeURIComponent(dates[1])}`;
+      }
+    }
+    fetch(url, { headers: { "Authorization": `Token ${token}` } })
+      .then(response => response.json())
+      .then(data => renderPredictedYieldChart(data.data))
+      .catch(error => console.error("Error fetching yield data:", error));
+  }
+
+  function renderPredictedYieldChart(data) {
+    const ctx = document.getElementById('predictedYieldChart').getContext('2d');
+    if(yieldChart) yieldChart.destroy();
+
+    const labels = data.map(item => item.crop);
+    const predictedData = data.map(item => item.avg_predicted_yield);
+    const expectedData = data.map(item => item.avg_expected_yield);
+
+    yieldChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Predicted Yield',
+          data: predictedData,
+          backgroundColor: 'rgba(54, 162, 235, 0.7)'
+        },
+        {
+          label: 'Expected Yield',
+          data: expectedData,
+          backgroundColor: 'rgba(75, 192, 192, 0.7)'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: { display: true, text: 'Predicted vs. Expected Yield per Crop' }
+        },
+        scales: {
+          y: { title: { display: true, text: 'Yield' } }
+        }
+      }
+    });
+  }
+
+  function fetchWeatherSuitabilityChartData() {
+    let url = `/recommendations/api/charts/weather-suitability/?`;
+    // Append filters similarly:
+    const cropValue = document.getElementById("filterCrop").value;
+    if(cropValue) url += `&crop=${encodeURIComponent(cropValue)}`;
+    const riskValue = document.getElementById("filterRisk").value;
+    if(riskValue) url += `&risk=${encodeURIComponent(riskValue)}`;
+    const dateRange = document.getElementById("filterDate").value;
+    if(dateRange) {
+      const dates = dateRange.split(" to ");
+      if(dates.length === 2) {
+        url += `&start_date=${encodeURIComponent(dates[0])}&end_date=${encodeURIComponent(dates[1])}`;
+      }
+    }
+    fetch(url, { headers: { "Authorization": `Token ${token}` } })
+      .then(response => response.json())
+      .then(data => renderWeatherSuitabilityChart(data.data))
+      .catch(error => console.error("Error fetching weather-suitability data:", error));
+  }
+
+  function renderWeatherSuitabilityChart(data) {
+    const ctx = document.getElementById('weatherSuitabilityChart').getContext('2d');
+    if(weatherChart) weatherChart.destroy();
+
+    // For example, use temperature as x and suitability as y:
+    const chartData = data.map(point => ({
+      x: point.temperature,
+      y: point.suitability,
+      crop: point.crop,
+      humidity: point.humidity,
+      wind_speed: point.wind_speed,
+      precipitation: point.precipitation,
+      date: point.date
+    }));
+
+    weatherChart = new Chart(ctx, {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: 'Weather vs. Suitability',
+          data: chartData,
+          backgroundColor: 'rgba(255, 159, 64, 0.8)'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: { display: true, text: 'Weather Conditions vs. Suitability Score' },
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                const d = context.raw;
+                return `Crop: ${d.crop} | Temp: ${d.x}°C, Suitability: ${d.y}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            title: { display: true, text: 'Temperature (°C)' }
+          },
+          y: {
+            title: { display: true, text: 'Suitability Score' },
+            min: 0,
+            max: 110
+          }
+        }
+      }
+    });
+  }
+
+  // Helper to generate random colors for chart lines
+  function getRandomColor() {
+    const r = Math.floor(Math.random()*200);
+    const g = Math.floor(Math.random()*200);
+    const b = Math.floor(Math.random()*200);
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  // Function to refresh all charts (call this when filters change)
+  function refreshCharts() {
+    if (Object.keys(cropColors).length === 0) {
+        console.log("Waiting for crop colors...");
+        setTimeout(refreshCharts, 500); // Retry every 500ms until colors are loaded
+    } else {
+        fetchTemperatureTrendsChartData();
+        fetchPredictedYieldChartData();
+        fetchWeatherSuitabilityChartData();
+    }
+}
+
+
+  // Bind refreshCharts() to filter changes (in addition to your table filter)
+  document.getElementById("filterBtn").addEventListener("click", refreshCharts);
+  document.getElementById("filterCrop").addEventListener("change", refreshCharts);
+  document.getElementById("filterRisk").addEventListener("change", refreshCharts);
+  
+  // Initial chart load
+  refreshCharts();
+
+
+
+    // Populate crop options for both the recommendation form and export controls
+    function populateCropOptions(data) {
+      // data is now an object with a "crops" array
+      let crops = data.crops || [];
+      filterCrop.innerHTML = '<option value="">All Crops</option>';
+      crops.forEach(crop => {
+          const option = document.createElement("option");
+          option.value = crop;
+          option.textContent = crop;
+          filterCrop.appendChild(option);
+      });
+    }
+
+
+    // Helper function to create a list-group item
+    function createListItem(text, extraClasses = "") {
+      const li = document.createElement("li");
+      li.textContent = text;
+      li.className = `list-group-item ${extraClasses}`;
+      return li;
+  }
+
+  // Helper function to create a card for suggestions
+  function createSuggestionCard(suggestion) {
+      const card = document.createElement("div");
+      card.className = "card text-success border-success mb-2";
+      card.innerHTML = `<div class="card-body">✅ ${suggestion}</div>`;
+      return card;
+  }
+
+  
+    // Fetch crops for dropdown
+    fetch("/recommendations/api/crops/", {
+      headers: { "Authorization": `Token ${token}` }
+    })
+    .then(response => response.json())
+    .then(data => {
+      populateCropOptions(data);
+    });
+    // GET Recommendations table, Filter, CSV
+    // Attach function to the global window object
+
+    // Function to fetch recommendations with an optional date filter:
+    window.fetchRecommendations = function (page = 1) {
+      let url = `/recommendations/api/recommendations/?page=${page}`;
+      
+      const cropValue = filterCrop.value;
+      if (cropValue) {
+          url += `&crop=${encodeURIComponent(cropValue)}`;
+      }
+      const riskValue = filterRisk.value;
+      if (riskValue) {
+          url += `&risk=${encodeURIComponent(riskValue)}`;
+      }
+      const dateRange = filterDateElem.value; // Now defined
+      if (dateRange) {
+          const dates = dateRange.split(" to ");
+          if (dates.length === 2) {
+              const start_date = dates[0];
+              const end_date = dates[1];
+              url += `&start_date=${encodeURIComponent(start_date)}&end_date=${encodeURIComponent(end_date)}`;
+          }
+      }
+
+      
+      fetch(url, { headers: { "Authorization": `Token ${token}` } })
+          .then(response => response.json())
+          .then(data => {
+              console.log("API Response:", data);
+              if (data && data.results) {
+                  recommendationsData = data.results;
+                  populateTable(recommendationsData);
+                  setupPagination(data.count, page, data.next, data.previous);
+              } else {
+                  console.error("API did not return results:", data);
+                  recommendationsTable.innerHTML = "<tr><td colspan='7' class='text-center text-danger'>No data available</td></tr>";
+              }
+          })
+          .catch(error => {
+              console.error("API Fetch Error:", error);
+              recommendationsTable.innerHTML = "<tr><td colspan='7' class='text-center text-danger'>Error loading data</td></tr>";
+          });
+  };
+
+
+  // A helper function to trigger filtering:
+  function filterRecommendations() {
+      // Optionally, you can reset to page 1 when filtering.
+      fetchRecommendations(1);
+  }
+
+  // Populate table
+  function populateTable(data) {
+      recommendationsTable.innerHTML = "";
+      data.forEach(rec => {
+          const predictedYield = (rec.predicted_yield !== undefined && rec.predicted_yield !== null && !isNaN(rec.predicted_yield)) 
+              ? parseFloat(rec.predicted_yield).toFixed(2) 
+              : "N/A";
+  
+          const expectedYield = (rec.expected_yield !== undefined && rec.expected_yield !== null && !isNaN(rec.expected_yield)) 
+              ? parseFloat(rec.expected_yield).toFixed(2) 
+              : "N/A";
+  
+          const cropName = rec.crop && typeof rec.crop === 'object' && rec.crop.name ? rec.crop.name : "Unknown";
+  
+          const row = `<tr>
+              <td>${cropName}</td>
+              <td>${predictedYield}</td>
+              <td>${expectedYield}</td>
+              <td><span class="badge bg-${rec.risk_assessment === 'Low risk' ? 'success' : rec.risk_assessment === 'Medium risk' ? 'warning' : 'danger'}">
+                  ${rec.risk_assessment || "N/A"}</span></td>
+              <td>${rec.optimal_planting_time || "Unknown"}</td>
+              <td>${rec.created_at ? new Date(rec.created_at).toLocaleDateString() : "N/A"}</td>
+              <td>
+              <button class="btn btn-outline-info btn-sm" onclick="viewRecommendation(${rec.id})" title="View"><i class="bi bi-eye"></i></button>
+              <button class="btn btn-outline-danger btn-sm" onclick="deleteRecommendation(${rec.id})" title="Delete"><i class="bi bi-trash"></i></button>
+              </td>
+          </tr>`;            
+          recommendationsTable.innerHTML += row;
+      });
+  }
+  
+
+  // Setup pagination controls
+  function setupPagination(total, currentPage, nextUrl, prevUrl) {
+      const totalPages = Math.ceil(total / 10); // using page_size=10 from your pagination class
+      // Build the HTML for pagination controls:
+      const paginationHTML = `
+        <nav aria-label="Page navigation">
+          <ul class="pagination justify-content-center">
+            <li class="page-item ${prevUrl ? '' : 'disabled'}" id="prevPageItem">
+              <button class="page-link" id="prevBtn" ${prevUrl ? `onclick="fetchRecommendations(${currentPage - 1})"` : ''}>Previous</button>
+            </li>
+            <li class="page-item disabled">
+              <span class="page-link" id="pageInfo">Page ${currentPage} of ${totalPages}</span>
+            </li>
+            <li class="page-item ${nextUrl ? '' : 'disabled'}" id="nextPageItem">
+              <button class="page-link" id="nextBtn" ${nextUrl ? `onclick="fetchRecommendations(${currentPage + 1})"` : ''}>Next</button>
+            </li>
+          </ul>
+        </nav>
+      `;
+      // Insert this HTML into the pagination container (make sure it exists in your HTML)
+      pagination.innerHTML = paginationHTML;
+  }
+  
+  
+  // Modal
+  window.viewRecommendation = function (id) {
+      let rec = recommendationsData.find(r => r.id === id);
+      if (!rec) {
+          console.error("Recommendation not found for ID:", id);
+          return;
+      }
+      
+      // Format basic values
+      let cropName = (rec.crop && typeof rec.crop === "object" && rec.crop.name)
+          ? rec.crop.name
+          : (typeof rec.crop === "string" ? rec.crop : "Unknown");
+      let predictedYield = (rec.predicted_yield && typeof rec.predicted_yield === "number")
+          ? rec.predicted_yield.toFixed(2)
+          : "N/A";
+      let expectedYield = (rec.expected_yield && typeof rec.expected_yield === "number")
+          ? rec.expected_yield.toFixed(2)
+          : "N/A";
+      let predictedSoilTemp = rec.predicted_soil_temp ? parseFloat(rec.predicted_soil_temp).toFixed(2) : "N/A";
+      let plantingTime = rec.optimal_planting_time || "Not Available";
+      let weatherSummary = rec.weather_summary || "No weather summary available.";
+      let riskAssessment = rec.risk_assessment || "Unknown";
+      let nextBestAction = rec.next_best_action || "No suggested action.";
+      let confidenceScore = rec.confidence_score || "N/A";
+      let createdAt = rec.created_at ? new Date(rec.created_at).toLocaleDateString() : "N/A";
+      
+      // Format the AI Model Version (same as in Recommendation Results)
+      const modelVersions = rec.ai_model_version;
+      let modelObj = null;
+      if (modelVersions) {
+          if (typeof modelVersions === 'string') {
+              const trimmed = modelVersions.trim();
+              if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+                  try {
+                      modelObj = JSON.parse(trimmed);
+                  } catch (e) {
+                      console.error("Failed to parse ai_model_version as JSON:", e);
+                      modelObj = modelVersions; // fallback to raw string
+                  }
+              } else {
+                  modelObj = modelVersions; // not JSON, so use raw value
+              }
+          } else if (typeof modelVersions === 'object') {
+              modelObj = modelVersions;
+          }
+      }
+      let formattedModelVersion = "Unknown";
+      if (modelObj && typeof modelObj === 'object') {
+          formattedModelVersion = Object.entries(modelObj)
+              .map(([key, value]) => {
+                  // Convert snake_case key to Title Case
+                  const titleCaseKey = key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                  return `${titleCaseKey}: ${value}`;
+              })
+              .join(' | ');
+      } else if (modelObj) {
+          formattedModelVersion = modelObj;
+      }
+      
+      // Build modal content using the same design as Recommendation Results
+      let modalBody = document.getElementById("modalBody");
+      modalBody.innerHTML = `
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>🌾 Crop:</strong> ${cropName}</p>
+            <p><strong>Predicted Soil Temp:</strong> ${predictedSoilTemp}°C</p>
+            <p><strong>Risk Assessment:</strong> ${riskAssessment}</p>
+            <p><strong>Predicted Yield:</strong> ${predictedYield}</p>
+            <p><strong>Expected Yield:</strong> ${expectedYield}</p>
+            <p><strong>Optimal Planting Time:</strong> ${plantingTime}</p>
+            <p><strong>Weather Summary:</strong> ${weatherSummary}</p>
+            <p><strong>AI Model Version:</strong> ${formattedModelVersion}</p>
+          </div>
+          <div class="col-md-6">
+            <h5>🚀 Next Best Action:</h5>
+            <p class="alert alert-warning text-center fw-bold">${nextBestAction}</p>
+            <p><strong>Created At:</strong> ${createdAt}</p>
+          </div>
+        </div>
+        <hr/>
+        <div class="accordion" id="modalAccordion">
+          <!-- Yield Analysis -->
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="modalYieldAnalysisHeading">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#modalYieldAnalysis" aria-expanded="false" aria-controls="modalYieldAnalysis">
+                📊 Yield Analysis
+              </button>
+            </h2>
+            <div id="modalYieldAnalysis" class="accordion-collapse collapse" aria-labelledby="modalYieldAnalysisHeading" data-bs-parent="#modalAccordion">
+              <div class="accordion-body">
+                <ul class="list-group">
+                  <li class="list-group-item"><strong>Soil Temperature:</strong> ${predictedSoilTemp}°C</li>
+                  <li class="list-group-item"><strong>Yield Prediction:</strong> ${predictedYield}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <!-- Yield Explanation -->
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="modalYieldExplanationHeading">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#modalYieldExplanation" aria-expanded="false" aria-controls="modalYieldExplanation">
+                📊 Yield Explanation
+              </button>
+            </h2>
+            <div id="modalYieldExplanation" class="accordion-collapse collapse" aria-labelledby="modalYieldExplanationHeading" data-bs-parent="#modalAccordion">
+              <div class="accordion-body">
+                <ul class="list-group">
+                  ${rec.yield_explanation 
+                    ? rec.yield_explanation.map(ex => `<li class="list-group-item">${ex}</li>`).join("") 
+                    : "<li class='list-group-item'>No yield explanation available.</li>"}
+                </ul>
+              </div>
+            </div>
+          </div>
+          <!-- Mitigation Suggestions -->
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="modalMitigationHeading">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#modalMitigation" aria-expanded="false" aria-controls="modalMitigation">
+                💡 Mitigation Suggestions
+              </button>
+            </h2>
+            <div id="modalMitigation" class="accordion-collapse collapse" aria-labelledby="modalMitigationHeading" data-bs-parent="#modalAccordion">
+              <div class="accordion-body">
+                ${rec.mitigation_suggestions && rec.mitigation_suggestions.length > 0 
+                  ? rec.mitigation_suggestions.map(s => `<div class="card mb-2"><div class="card-body">✅ ${s}</div></div>`).join("")
+                  : "<p>No mitigation suggestions available.</p>"}
+              </div>
+            </div>
+          </div>
+          <!-- Historical Trends -->
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="modalHistoricalTrendsHeading">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#modalHistoricalTrends" aria-expanded="false" aria-controls="modalHistoricalTrends">
+                📈 Historical Trends
+              </button>
+            </h2>
+            <div id="modalHistoricalTrends" class="accordion-collapse collapse" aria-labelledby="modalHistoricalTrendsHeading" data-bs-parent="#modalAccordion">
+              <div class="accordion-body">
+                <ul class="list-group">
+                  ${rec.historical_trends 
+                    ? rec.historical_trends.map(tr => `<li class="list-group-item">📈 ${tr}</li>`).join("") 
+                    : "<li class='list-group-item'>No historical trends available.</li>"}
+                </ul>
+              </div>
+            </div>
+          </div>
+          <!-- Alerts -->
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="modalAlertsHeading">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#modalAlerts" aria-expanded="false" aria-controls="modalAlerts">
+                ⚠ Alerts
+              </button>
+            </h2>
+            <div id="modalAlerts" class="accordion-collapse collapse" aria-labelledby="modalAlertsHeading" data-bs-parent="#modalAccordion">
+              <div class="accordion-body">
+                <ul class="list-group">
+                  ${rec.alerts 
+                    ? rec.alerts.map(a => `<li class="list-group-item"><span class="badge bg-danger">⚠</span> ${a}</li>`).join("") 
+                    : "<li class='list-group-item'>No alerts available.</li>"}
+                </ul>
+              </div>
+            </div>
+          </div>
+          <!-- Alternative Farming Advice -->
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="modalAlternativeAdviceHeading">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#modalAlternativeAdvice" aria-expanded="false" aria-controls="modalAlternativeAdvice">
+                🌱 Alternative Farming Advice
+              </button>
+            </h2>
+            <div id="modalAlternativeAdvice" class="accordion-collapse collapse" aria-labelledby="modalAlternativeAdviceHeading" data-bs-parent="#modalAccordion">
+              <div class="accordion-body">
+                <ul class="list-group">
+                  ${rec.alternative_farming_advice 
+                    ? rec.alternative_farming_advice.map(advice => `<li class="list-group-item">${advice}</li>`).join("") 
+                    : "<li class='list-group-item'>No alternative advice available.</li>"}
+                </ul>
+              </div>
+            </div>
+          </div>
+          <!-- Alternative Recommended Crops -->
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="modalRecommendedCropsHeading">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#modalRecommendedCrops" aria-expanded="false" aria-controls="modalRecommendedCrops">
+                🌾 Alternative Recommended Crops
+              </button>
+            </h2>
+            <div id="modalRecommendedCrops" class="accordion-collapse collapse" aria-labelledby="modalRecommendedCropsHeading" data-bs-parent="#modalAccordion">
+              <div class="accordion-body">
+                ${rec.recommended_crops && rec.recommended_crops.crops && rec.recommended_crops.crops.length > 0 
+                  ? rec.recommended_crops.crops.map(c => `<span class="badge bg-primary m-1">${c}</span>`).join("")
+                  : "<p>No alternative crops found.</p>"}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      let modalElement = document.getElementById("viewModal");
+      // Remove any inert or aria-hidden settings before showing the modal
+      modalElement.removeAttribute("inert");
+      modalElement.setAttribute("aria-hidden", "false");
+      
+      // Initialize and show the modal
+      let modal = new bootstrap.Modal(modalElement);
+      modalElement.addEventListener("shown.bs.modal", function () {
+          document.getElementById("viewModalLabel").focus();
+      }, { once: true });
+      modalElement.addEventListener("hide.bs.modal", function () {
+          if (modalElement.contains(document.activeElement)) {
+              document.activeElement.blur();
+          }
+          const triggerButton = document.querySelector('[data-bs-target="#viewModal"]');
+          if (triggerButton) {
+              triggerButton.focus();
+          } else {
+              document.body.focus();
+          }
+      }, { once: true });
+      modal.show();
+  };
+  
+          
+  // Delete recommendation
+  window.deleteRecommendation = function (id) {
+      Swal.fire({
+          title: "Are you sure?",
+          text: "This will permanently delete the recommendation!",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Yes, delete it!"
+      }).then((result) => {
+          if (result.isConfirmed) {
+              fetch(`/recommendations/api/recommendations/${id}/`, {
+                  method: "DELETE",
+                  headers: {
+                      "Authorization": `Token ${token}`,
+                      "X-CSRFToken": csrftoken
+                  }
+              }).then(response => {
+                  if (!response.ok) {
+                      throw new Error(`Failed to delete: ${response.status}`);
+                  }
+                  return response.json();
+              }).then(() => {
+                  fetchRecommendations();
+                  Swal.fire("Deleted!", "Recommendation has been removed.", "success");
+              }).catch(error => {
+                  console.error("Delete Error:", error);
+                  Swal.fire("Error", "Failed to delete recommendation.", "error");
+              });
+          }
+      });
+  };
+      
+
+// Call fetchCropColors() when the page loads
+fetchCropColors();
+
+// Fetch recommendations initially
+fetchRecommendations();
+});
+// Function to get CSRF token from cookies
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let cookie of cookies) {
+          cookie = cookie.trim();
+          if (cookie.substring(0, name.length + 1) === (name + "=")) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+          }
+      }
+  }
+  return cookieValue;
+}
+
+
+
+</script>
+
+{% endblock %}
+

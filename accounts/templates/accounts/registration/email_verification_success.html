@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Email Verified Successfully{% endblock %}
+
+{% block content %}
+<div class="container mt-5 text-center">
+    <h2>Email Verified Successfully</h2>
+    <p class="text-success">Your email has been successfully verified. You can now log in to your account.</p>
+    <a href="{% url 'login' %}" class="btn btn-success">Go to Login</a>
+</div>
+{% endblock %}

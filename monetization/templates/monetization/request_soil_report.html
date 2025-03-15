@@ -1,0 +1,458 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Request AI Soil Report{% endblock %}
+
+{% block extra_css %}
+<!-- AOS Animation CSS -->
+<link href="https://cdn.jsdelivr.net/npm/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<style>
+  /* Background Image with overlay */
+  body {
+      background: url("{% static 'images/farming-bg.jpg' %}") no-repeat center center fixed;
+      background-size: cover;
+  }
+  /* Card background for readability */
+  .card {
+      background: rgba(255, 255, 255, 0.9);
+  }
+  /* Section title styling */
+  .section-title {
+      font-weight: bold;
+      font-size: 1.5rem;
+      border-bottom: 2px solid #0072ff;
+      padding-bottom: 5px;
+      margin-bottom: 15px;
+  }
+  /* Gradient Button with animation */
+  .btn-primary {
+      background: linear-gradient(90deg, #00c6ff, #0072ff);
+      border: none;
+      padding: 12px;
+      font-size: 18px;
+      transition: all 0.3s ease-in-out;
+  }
+  .btn-primary:hover {
+      background: linear-gradient(90deg, #0072ff, #00c6ff);
+      transform: scale(1.05);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Branding Header -->
+<div class="text-center my-4" data-aos="fade-down">
+  <img src="{% static 'images/logo_AI_Farming_round.png' %}" alt="MyBrand Logo" class="img-fluid" style="max-width:120px;">
+  <h1 class="mt-2">Precision AI-Powered Soil Insights</h1>
+  <p class="lead">Empowering Farmers to Maximize Yield & Sustainability</p>
+</div>
+
+<!-- Example PDF Download Button -->
+<div class="text-center my-3" data-aos="fade-up">
+  <a href="{% static 'report/example_soil_report.pdf' %}" download class="btn btn-outline-info">
+    <i class="bi bi-download"></i> Download Example PDF Report
+  </a>
+</div>
+
+<div class="container">
+  <!-- Alert Notifications -->
+  <div id="alertContainer"></div>
+
+  <div class="mt-3">
+    <h2 class="text-center" data-aos="fade-up">Request AI Soil Report</h2>
+    <p class="text-muted text-center" data-aos="fade-up">Fill in the details below to generate an AI-powered soil report.</p>
+    
+    <form method="POST" id="soilReportForm" action="" novalidate>
+      {% csrf_token %}
+
+      <!-- Location Details Card -->
+      <div class="card shadow-sm p-4 mb-4" data-aos="fade-up">
+        <h4 class="section-title text-primary">Location Details</h4>
+        <div class="mb-3">
+          <label for="location" class="form-label">Location</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+            <input type="text" id="location" name="location" class="form-control" list="locationSuggestions" placeholder="Enter location..." required>
+            <button type="button" class="btn btn-outline-secondary" onclick="getUserLocation()">
+              Use My Location
+            </button>
+          </div>
+          <datalist id="locationSuggestions">
+            <!-- Options to be populated dynamically via JavaScript -->
+          </datalist>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="latitude" class="form-label">
+              Latitude <span data-bs-toggle="tooltip" title="Automatically filled if you use 'Use My Location'.">ℹ️</span>
+            </label>
+            <input type="text" id="latitude" name="latitude" class="form-control" placeholder="e.g., 34.0522">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="longitude" class="form-label">
+              Longitude <span data-bs-toggle="tooltip" title="Automatically filled if you use 'Use My Location'.">ℹ️</span>
+            </label>
+            <input type="text" id="longitude" name="longitude" class="form-control" placeholder="e.g., -118.2437">
+          </div>
+        </div>
+      </div>
+
+      <!-- Soil Data Card -->
+      <div class="card shadow-sm p-4 mb-4" data-aos="fade-up">
+        <h4 class="section-title text-primary">Soil Data</h4>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+              <label for="ph_level" class="form-label">
+                Soil pH Level <span data-bs-toggle="tooltip" title="Soil acidity level. Ideal range: 5.5 - 7.5.">ℹ️</span>
+              </label>
+              <input type="number" step="0.1" id="ph_level" name="ph_level" class="form-control" placeholder="e.g., 6.5" onblur="validatePH()">
+              <div class="invalid-feedback">pH must be between 3.0 and 10.0.</div>  
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="nitrogen" class="form-label">
+              Nitrogen Level (mg/kg) <span data-bs-toggle="tooltip" title="Enter soil nitrogen content in mg/kg.">ℹ️</span>
+            </label>
+            <input type="number" id="nitrogen" name="nitrogen" class="form-control" placeholder="e.g., 50">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="moisture" class="form-label">
+              Soil Moisture (%) <span data-bs-toggle="tooltip" title="Estimated soil moisture percentage.">ℹ️</span>
+            </label>
+            <input type="number" id="moisture" name="moisture" class="form-control" placeholder="e.g., 50">
+          </div>
+        </div>
+      </div>
+
+      <!-- Expandable Additional Soil Attributes -->
+      <div class="mb-3" data-aos="fade-up">
+        <a class="btn btn-secondary" data-bs-toggle="collapse" href="#detailedAttributes" role="button" aria-expanded="false" aria-controls="detailedAttributes">
+          Show Additional Soil Attributes (Optional)
+        </a>
+        <div class="collapse mt-2" id="detailedAttributes">
+          <div class="card card-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="phosphorus" class="form-label">
+                  Phosphorus (mg/kg) <span data-bs-toggle="tooltip" title="Optional: Soil phosphorus level.">ℹ️</span>
+                </label>
+                <input type="number" id="phosphorus" name="phosphorus" class="form-control" placeholder="e.g., 20">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="potassium" class="form-label">
+                  Potassium (mg/kg) <span data-bs-toggle="tooltip" title="Optional: Soil potassium level.">ℹ️</span>
+                </label>
+                <input type="number" id="potassium" name="potassium" class="form-control" placeholder="e.g., 150">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weather Data Card -->
+      <div class="card shadow-sm p-4 mb-4" data-aos="fade-up">
+        <h4 class="section-title text-primary">Weather Data</h4>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="temperature_2m" class="form-label">
+              Temperature (2m, °C) <span data-bs-toggle="tooltip" title="Current temperature measured at 2 meters above ground level.">ℹ️</span>
+            </label>
+            <input type="number" step="0.1" id="temperature_2m" name="temperature_2m" class="form-control" placeholder="e.g., 20">
+          </div>          
+          <div class="col-md-4 mb-3">
+            <label for="wind_speed" class="form-label">
+              Wind Speed (m/s) <span data-bs-toggle="tooltip" title="Current wind speed in meters per second.">ℹ️</span>
+            </label>
+            <input type="number" step="0.1" id="wind_speed" name="wind_speed" class="form-control" placeholder="e.g., 5">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="precipitation" class="form-label">
+              Precipitation (mm) <span data-bs-toggle="tooltip" title="Precipitation measured in millimeters.">ℹ️</span>
+            </label>
+            <input type="number" step="0.1" id="precipitation" name="precipitation" class="form-control" placeholder="e.g., 30">
+          </div>
+        </div>
+      </div>
+
+      <!-- Farming Preferences Card -->
+      <div class="card shadow-sm p-4 mb-4" data-aos="fade-up">
+        <h4 class="section-title text-primary">Farming Preferences</h4>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="crop_type" class="form-label">
+              Preferred Crop <span data-bs-toggle="tooltip" title="Select your preferred crop for the report.">ℹ️</span>
+            </label>
+            <select id="crop_type" name="crop_type" class="form-select">
+              <option value="">Select a crop</option>
+              {% for crop in crops %}
+                <option value="{{ crop.name }}">{{ crop.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="soil_type" class="form-label">
+              Soil Type <span data-bs-toggle="tooltip" title="Select your soil type.">ℹ️</span>
+            </label>
+            <select id="soil_type" name="soil_type" class="form-select">
+              <option value="">Select soil type</option>
+              {% for st in soil_types %}
+                <option value="{{ st }}">{{ st }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">
+              Units <span data-bs-toggle="tooltip" title="Select your preferred measurement units.">ℹ️</span>
+            </label>
+            <div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="units" id="metric" value="metric" checked>
+                <label class="form-check-label" for="metric">Metric</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="units" id="imperial" value="imperial">
+                <label class="form-check-label" for="imperial">Imperial</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Farming Data Card -->
+      <div class="card shadow-sm p-4 mb-4" data-aos="fade-up">
+        <h4 class="section-title text-primary">Additional Farming Data</h4>
+        <div class="mb-3">
+          <label for="irrigation_method" class="form-label">
+            Irrigation Method <span data-bs-toggle="tooltip" title="Select your irrigation method.">ℹ️</span>
+          </label>
+          <select id="irrigation_method" name="irrigation_method" class="form-select">
+            <option value="drip">Drip Irrigation</option>
+            <option value="sprinkler">Sprinkler</option>
+            <option value="flood">Flood Irrigation</option>
+            <option value="none">No Irrigation</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="additional_notes" class="form-label">
+            Additional Notes <span data-bs-toggle="tooltip" title="Any extra information you want to share.">ℹ️</span>
+          </label>
+          <textarea id="additional_notes" name="additional_notes" class="form-control" rows="3" placeholder="Enter any additional notes..."></textarea>
+        </div>
+      </div>
+
+      <!-- Progress Spinner -->
+      <div id="spinner" class="text-center mb-3" style="display:none;" data-aos="fade-up">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p>Processing your request, please wait...</p>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn btn-primary w-100" data-aos="fade-up">Request Soil Report</button>
+    </form>
+
+    <!-- Feedback Section Card -->
+    <div class="card shadow-sm p-4 mt-5" data-aos="fade-up">
+        <h4 class="section-title">Your Feedback</h4>
+        <p class="text-muted">Let us know how accurate and useful you found the report.</p>
+        <form id="feedbackForm">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="feedbackEmail" class="form-label">Your Email (optional)</label>
+            <input type="email" id="feedbackEmail" class="form-control" placeholder="Enter your email">
+          </div>
+          <div class="mb-3">
+            <label for="feedbackText" class="form-label">Feedback</label>
+            <textarea id="feedbackText" class="form-control" rows="3" placeholder="Enter your feedback here..."></textarea>
+          </div>
+          <button type="button" id="submitFeedback" class="btn btn-outline-primary">Submit Feedback</button>
+        </form>
+    </div>
+      
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- AOS Animation JS -->
+<script src="https://cdn.jsdelivr.net/npm/aos@2.3.1/dist/aos.js"></script>
+<script>
+  AOS.init();
+
+  // Global alert function
+  function showAlert(message, type) {
+    const alertContainer = document.getElementById("alertContainer");
+    if (alertContainer) {
+      alertContainer.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>`;
+    }
+  }
+
+  // Function to autofill latitude & longitude using Geolocation API
+  function getUserLocation() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        document.getElementById("latitude").value = position.coords.latitude.toFixed(6);
+        document.getElementById("longitude").value = position.coords.longitude.toFixed(6);
+      }, () => {
+        showAlert("Location access denied.", "warning");
+      });
+    } else {
+      showAlert("Geolocation is not supported by your browser.", "danger");
+    }
+  }
+
+  // Initialize Bootstrap tooltips and set up event handlers
+  document.addEventListener("DOMContentLoaded", function () {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+      new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // Inline validation for Soil pH Level
+    function validatePH() {
+      const phInput = document.getElementById("ph_level");
+      const phValue = parseFloat(phInput.value);
+      if (phInput.value !== "" && (phValue < 3 || phValue > 10)) {
+        phInput.classList.add("is-invalid");
+        return false;
+      } else {
+        phInput.classList.remove("is-invalid");
+        return true;
+      }
+    }
+    // Expose validatePH globally for inline onblur
+    window.validatePH = validatePH;
+
+    const form = document.getElementById("soilReportForm");
+    const spinner = document.getElementById("spinner");
+    const alertContainer = document.getElementById("alertContainer");
+
+    // Feedback form submission
+    document.getElementById("submitFeedback").addEventListener("click", async function () {
+      const feedback = document.getElementById("feedbackText").value.trim();
+      const email = document.getElementById("feedbackEmail")?.value.trim() || "";
+      if (!feedback) {
+        showAlert("Please enter your feedback before submitting.", "warning");
+        return;
+      }
+      const token = sessionStorage.getItem("authToken");  // Get stored token
+      try {
+        const response = await fetch("/monetization/api/feedback/", {
+          method: "POST",
+          headers: {
+            "Authorization": `Token ${token}`,
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken(),
+          },
+          body: JSON.stringify({ feedback_text: feedback, email: email })
+        });
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`);
+        }
+        const result = await response.json();
+        showAlert(result.message || "Thank you for your feedback!", "success");
+        document.getElementById("feedbackForm").reset();
+      } catch (error) {
+        showAlert("Error submitting feedback. Please try again.", "danger");
+      }
+    });
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      // Clear any previous alerts
+      alertContainer.innerHTML = "";
+
+      // Ensure Location is provided
+      const locationInput = document.getElementById("location").value.trim();
+      if (!locationInput) {
+        showAlert("Location is required.", "danger");
+        return;
+      }
+
+      // Validate the pH field (and extend with other validations as needed)
+      if (!validatePH()) {
+        showAlert("Please correct the errors before submitting.", "danger");
+        return;
+      }
+
+      const token = sessionStorage.getItem("authToken");  // Get stored token
+      if (!token) {
+        showAlert("⚠️ You must be logged in to request a soil report.", "danger");
+        return;
+      }
+
+      // Show progress spinner
+      spinner.style.display = "block";
+
+      // Collect form data safely
+      const formData = {
+        location: document.getElementById("location")?.value.trim() || "",
+        latitude: document.getElementById("latitude")?.value.trim() ? parseFloat(document.getElementById("latitude").value) : 0.0,
+        longitude: document.getElementById("longitude")?.value.trim() ? parseFloat(document.getElementById("longitude").value) : 0.0,
+        soil_type: document.getElementById("soil_type")?.value.trim() || "unknown",
+        ph_level: document.getElementById("ph_level")?.value.trim() ? parseFloat(document.getElementById("ph_level").value) : 6.5,
+        nitrogen: document.getElementById("nitrogen")?.value.trim() ? parseFloat(document.getElementById("nitrogen").value) : 0,
+        moisture: document.getElementById("moisture")?.value.trim() ? parseFloat(document.getElementById("moisture").value) : 50,
+        phosphorus: document.getElementById("phosphorus")?.value.trim() ? parseFloat(document.getElementById("phosphorus").value) : 0,
+        potassium: document.getElementById("potassium")?.value.trim() ? parseFloat(document.getElementById("potassium").value) : 0,
+        precipitation: document.getElementById("precipitation")?.value.trim() ? parseFloat(document.getElementById("precipitation").value) : 0,
+        temperature_2m: document.getElementById("temperature_2m")?.value.trim() ? parseFloat(document.getElementById("temperature_2m").value) : 20,
+        wind_speed: document.getElementById("wind_speed")?.value.trim() ? parseFloat(document.getElementById("wind_speed").value) : 5,
+        crop_type: document.getElementById("crop_type")?.value.trim() || "",
+        units: document.querySelector('input[name="units"]:checked')?.value || "metric",
+        irrigation_method: document.getElementById("irrigation_method")?.value.trim() || "none",
+        additional_notes: document.getElementById("additional_notes")?.value.trim() || "",
+      };
+
+      console.log("Submitting request:", formData);
+
+      try {
+        const response = await fetch("/monetization/api/request-report/", {
+          method: "POST",
+          headers: {
+            "Authorization": `Token ${token}`,
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken(),
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log("✅ Report Request Successful:", result);
+
+        // Hide spinner and redirect to checkout page
+        spinner.style.display = "none";
+        window.location.href = "/monetization/checkout/";
+      } catch (error) {
+        console.error("❌ Fetch Error:", error);
+        spinner.style.display = "none";
+        showAlert("Error processing request. Please try again.", "danger");
+      }
+    });
+
+    // Function to get CSRF token from cookies
+    function getCSRFToken() {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let cookie of cookies) {
+          cookie = cookie.trim();
+          if (cookie.startsWith("csrftoken=")) {
+            cookieValue = cookie.split("=")[1];
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+  });
+</script>
+{% endblock %}

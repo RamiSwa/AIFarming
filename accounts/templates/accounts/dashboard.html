@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            
+            <!-- ✅ Your Account Details (Full Width) -->
+            <div class="card shadow-lg border-0 rounded-lg mb-4">
+                <div class="card-body">
+                    <h4 class="mb-3 text-primary text-center">🛠️ Your Account Details</h4>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>Email:</strong> {{ user.email }}</li>
+                        <li class="list-group-item"><strong>Username:</strong> {{ user.username }}</li>
+                        <li class="list-group-item"><strong>Joined On:</strong> {{ user.date_joined|date:"F j, Y" }}</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- ✅ Subscription (Left) -->
+                <div class="col-md-6">
+                    <div class="card shadow-lg border-0 rounded-lg mb-4 h-100 text-center">
+                        <div class="card-body">
+                            <h4 class="mb-3 text-primary">📅 Your Subscription</h4>
+                            {% if subscription %}
+                                <div class="alert alert-success">
+                                    <strong>Plan:</strong> {{ subscription.plan.name }} <br>
+                                    <strong>Next Billing:</strong> {{ subscription.next_billing_date|date:"F j, Y" }} <br>
+                                    <strong>Status:</strong> <span class="badge bg-success">{{ subscription.status }}</span>
+                                </div>
+                                <form method="POST" action="{% url 'cancel_subscription' subscription.subscription_id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm">Cancel Subscription</button>
+                                </form>
+                            {% else %}
+                                <p class="text-muted">You are not subscribed to any plan.</p>
+                                <a href="{% url 'subscription_pricing' %}" class="btn btn-primary">Subscribe Now</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ✅ Notifications (Right) -->
+                <div class="col-md-6">
+                    <div class="card shadow-lg border-0 rounded-lg mb-4 h-100">
+                        <div class="card-body text-center">
+                            <h4 class="mb-3 text-primary">🔔 Notifications</h4>
+                            <div style="max-height: 120px; overflow-y: auto;">
+                                <ul class="list-group">
+                                    {% for notification in notifications %}
+                                        <li class="list-group-item {% if not notification.is_read %}bg-light{% endif %}">
+                                            {{ notification.message }}
+                                            <span class="badge bg-info float-end">{{ notification.created_at|timesince }} ago</span>
+                                        </li>
+                                    {% empty %}
+                                        <div class="alert alert-info text-center">
+                                            <i class="fas fa-bell"></i> No new notifications.
+                                        </div>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <form method="POST" action="{% url 'mark_notifications_read' %}" class="mt-2">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-check"></i> Mark All as Read
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- ✅ Orders (Big Card) -->
+                <div class="col-md-6 mt-5">
+                    <div class="card shadow-lg border-0 rounded-lg mb-4 h-100">
+                        <div class="card-body">
+                            <h4 class="mb-5 text-primary text-center">🛒 Your Orders</h4>
+                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                <table class="table table-bordered">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Order #</th>
+                                            <th>Type</th>
+                                            <th>Status</th>
+                                            <th>Total</th>
+                                            <th>Created At</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for order in orders %}
+                                            <tr>
+                                                <td>{{ order.order_number }}</td>
+                                                <td>{{ order.get_order_type_display }}</td>
+                                                <td>
+                                                    <span class="badge {% if order.order_status == 'completed' %}bg-success{% else %}bg-warning{% endif %}">
+                                                        {{ order.get_order_status_display }}
+                                                    </span>
+                                                </td>
+                                                <td>${{ order.total_amount }} {{ order.currency }}</td>
+                                                <td>{{ order.created_at|date:"M d, Y" }}</td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr><td colspan="5" class="text-center">No orders found.</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ✅ AI Reports (Big Card) -->
+                <div class="col-md-6 mt-5">
+                    <div class="card shadow-lg border-0 rounded-lg mb-4 h-100">
+                        <div class="card-body">
+                            <h4 class="mb-5 text-primary text-center">📄 Your AI Reports</h4>
+                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                <ul class="list-group">
+                                    {% for report in ai_reports %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span><strong>Generated:</strong> {{ report.generated_at|date:"M d, Y" }}</span>
+                                            {% if report.status == "completed" %}
+                                                <a href="{{ report.report_file.url }}" class="btn btn-success btn-sm" download>📥 Download</a>
+                                            {% else %}
+                                                <span class="badge bg-warning">Processing...</span>
+                                            {% endif %}
+                                        </li>
+                                    {% empty %}
+                                        <li class="list-group-item text-center">No reports available.</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div> <!-- End row -->
+        </div>
+    </div>
+</div>
+{% endblock %}

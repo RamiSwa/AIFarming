@@ -1,0 +1,2 @@
+time,location,soil_temp_0_to_7cm,soil_temp_7_to_28cm,latitude,longitude,moisture,ph_level,nitrogen,phosphorus,potassium
+2025-02-09T12:10:00Z,Texas,18.2,20.1,31.2634,-98.5456,12,6.5,3,5,7

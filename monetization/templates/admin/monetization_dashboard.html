@@ -1,0 +1,51 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+        <h2>💰 Monetization Dashboard</h2>
+
+        <div class="row">
+            <!-- Total Payments -->
+            <div class="col-md-3">
+                <div class="card text-white bg-primary mb-3">
+                    <div class="card-header">Total Payments</div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ total_payments }}</h5>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Orders -->
+            <div class="col-md-3">
+                <div class="card text-white bg-success mb-3">
+                    <div class="card-header">Total Orders</div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ total_orders }}</h5>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Donations -->
+            <div class="col-md-3">
+                <div class="card text-white bg-warning mb-3">
+                    <div class="card-header">Total Donations (USD)</div>
+                    <div class="card-body">
+                        <h5 class="card-title">${{ total_donations|floatformat:2 }}</h5>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Subscriptions -->
+            <div class="col-md-3">
+                <div class="card text-white bg-info mb-3">
+                    <div class="card-header">Active Subscriptions</div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ total_subscriptions }}</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{ block.super }}
+{% endblock %}

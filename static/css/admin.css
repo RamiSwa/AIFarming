@@ -1,0 +1,5 @@
+/* ✅ Improve mobile responsiveness */
+@media (max-width: 768px) {
+    .nav-item { padding: 10px; }
+    .navbar-brand { font-size: 18px; }
+}
