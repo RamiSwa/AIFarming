@@ -72,3 +72,4 @@ django-defender
 django-recaptcha
 django-jazzmin
 dj-database-url==2.3.0
+whitenoise==6.9.0
