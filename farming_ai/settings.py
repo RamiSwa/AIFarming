@@ -184,14 +184,21 @@ AUTHENTICATION_BACKENDS = [
 
 
 import os
-import dj_database_url
 
 DATABASES = {
-    'default': dj_database_url.config(default=os.getenv("DATABASE_URL"))
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv("POSTGRES_DB", "railway"),
+        'USER': os.getenv("POSTGRES_USER", "postgres"),
+        'PASSWORD': os.getenv("POSTGRES_PASSWORD", "lrHTviTOZsjLANrQwpoCZXiDToMcOSrE"),
+        'HOST': os.getenv("PGHOST", "postgres.railway.internal"),
+        'PORT': os.getenv("PGPORT", "5432"),
+    }
 }
 
-if not DATABASES['default']:
-    raise Exception("DATABASE_URL is missing. Make sure it's set in Railway variables.")
+if not DATABASES['default']['NAME']:
+    raise Exception("PostgreSQL Database not found. Check Railway environment variables.")
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
