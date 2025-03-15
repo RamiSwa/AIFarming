@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-SECRET_KEY = config('SECRET_KEY')  # Moved to .env
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dsj68iiok02=&#q56$4+l4x73=3*i7z@e&7o_rwf#@^ei4i@$k")
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',')
