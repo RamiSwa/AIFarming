@@ -189,15 +189,16 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv("POSTGRES_DB", "railway"),
-        'USER': os.getenv("POSTGRES_USER", "farm_admin"),
-        'PASSWORD': os.getenv("POSTGRES_PASSWORD", "securepasswordswaed123"),
-        'HOST': os.getenv("PGHOST", "ballast.proxy.rlwy.net"),  # ✅ Correct host
-        'PORT': os.getenv("PGPORT", "43029"),  # ✅ Correct port
+        'USER': os.getenv("POSTGRES_USER", "postgres"),  # ✅ Updated to 'postgres'
+        'PASSWORD': os.getenv("POSTGRES_PASSWORD", "EUuywVfrxLjHXmOadsZTuUDeWQCmNzwo"),  # ✅ New password
+        'HOST': os.getenv("PGHOST", "shuttle.proxy.rlwy.net"),  # ✅ New host
+        'PORT': os.getenv("PGPORT", "32356"),  # ✅ New port
     }
 }
 
 if not DATABASES['default']['NAME']:
     raise Exception("PostgreSQL Database not found. Check Railway environment variables.")
+
 
 
 
