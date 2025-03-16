@@ -1,7 +1,6 @@
 import os
 import logging
 import boto3
-import logging
 import pandas as pd
 import numpy as np
 from celery import shared_task
@@ -16,8 +15,6 @@ from .utils import load_model, load_pipeline, preprocess_input_data, make_predic
 from django.utils import timezone
 from datetime import timedelta
 import pytz
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 import io
 
 logger = logging.getLogger(__name__)
@@ -35,44 +32,35 @@ User = get_user_model()
 def process_csv_upload(file_name, user_id):
     """
     Processes a CSV file uploaded to Cloudflare R2.
-    - Uses Django Storage API to fetch & read the file (no absolute paths).
+    - Directly uses boto3 client to fetch the file from Cloudflare R2.
     """
     logger.info(f"🚀 Celery Task Started! File: {file_name}, User ID: {user_id}")
-
     csv_content = None  # Placeholder for file content
 
-    # ✅ Check if file exists in Django's default storage
-    if default_storage.exists(file_name):
-        logger.info(f"✅ File {file_name} found in Django default storage.")
-        with default_storage.open(file_name, "rb") as csv_file:
-            csv_content = csv_file.read()
-    else:
-        logger.warning(f"⚠️ File {file_name} NOT found in Django storage. Trying Cloudflare R2...")
+    # Setup boto3 client for Cloudflare R2
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=os.getenv("R2_ENDPOINT_URL"),
+        aws_access_key_id=os.getenv("R2_ACCESS_KEY_ID"),
+        aws_secret_access_key=os.getenv("R2_SECRET_ACCESS_KEY"),
+        config=boto3.session.Config(signature_version="s3v4", region_name="auto")
+    )
 
-        # ✅ Setup boto3 client for Cloudflare R2
-        s3 = boto3.client(
-            "s3",
-            endpoint_url=os.getenv("R2_ENDPOINT_URL"),
-            aws_access_key_id=os.getenv("R2_ACCESS_KEY_ID"),
-            aws_secret_access_key=os.getenv("R2_SECRET_ACCESS_KEY"),
-            config=boto3.session.Config(signature_version="s3v4", region_name="auto")
-        )
+    bucket_name = os.getenv("R2_BUCKET_NAME")
+    try:
+        logger.info(f"🔍 Attempting to fetch file {file_name} from Cloudflare R2 (Bucket: {bucket_name})")
+        response = s3.get_object(Bucket=bucket_name, Key=file_name)
+        csv_content = response['Body'].read()
+        logger.info(f"✅ Successfully fetched file {file_name} from Cloudflare R2.")
+    except Exception as e:
+        logger.error(f"⛔ File {file_name} NOT found in Cloudflare R2! Error: {str(e)}")
+        return {"error": f"File {file_name} not found in storage."}
 
-        bucket_name = os.getenv("R2_BUCKET_NAME")
-        try:
-            response = s3.get_object(Bucket=bucket_name, Key=file_name)
-            csv_content = response['Body'].read()
-            logger.info(f"✅ Successfully fetched file {file_name} from Cloudflare R2.")
-        except Exception as e:
-            logger.error(f"⛔ File {file_name} NOT found in Cloudflare R2! Error: {str(e)}")
-            return {"error": f"File {file_name} not found in storage."}
-
-    # ✅ Convert to DataFrame
+    # Convert CSV content to DataFrame
     try:
         df = pd.read_csv(io.BytesIO(csv_content))
-        df.columns = df.columns.str.strip()  # Ensure clean column names
-        logger.info(f"📊 CSV Loaded Successfully! Columns: {df.columns.tolist()}")
-        
+        df.columns = df.columns.str.strip()  # Clean column names
+        logger.info(f"📊 CSV loaded successfully! Columns: {df.columns.tolist()}")
     except Exception as e:
         logger.error(f"⛔ Error reading CSV file: {str(e)}")
         return {"error": "Invalid CSV format"}
@@ -89,25 +77,22 @@ def process_csv_upload(file_name, user_id):
     }
     missing_columns = required_columns - set(df.columns)
     if missing_columns:
-        logging.error(f"⛔ Missing required columns: {', '.join(missing_columns)}")
+        logger.error(f"⛔ Missing required columns: {', '.join(missing_columns)}")
         return {"error": f"Missing required columns: {', '.join(missing_columns)}"}
 
-    logging.info(f"✅ Processing CSV {file_name} with columns: {df.columns.tolist()}")
-
+    logger.info(f"✅ Processing CSV {file_name} with columns: {df.columns.tolist()}")
     user = User.objects.get(id=user_id)
     recommendations_created = []
 
     for index, row in df.iterrows():
         try:
-            logging.debug(f"📌 Processing Row {index + 1}: {row.to_dict()}")
-
+            logger.debug(f"📌 Processing Row {index + 1}: {row.to_dict()}")
             # Convert `time` to a timezone-aware datetime object
             time_str = str(row["time"]).strip()
             naive_time = date_parser.parse(time_str)
             time_obj = make_aware(naive_time, pytz.UTC)
-
             latitude, longitude = float(row["latitude"]), float(row["longitude"])
-            logging.info(f"📌 Processing Row {index + 1} ➡ Parsed Time: {time_obj}, Lat: {latitude}, Lon: {longitude}")
+            logger.info(f"📌 Row {index + 1} ➡ Parsed Time: {time_obj}, Lat: {latitude}, Lon: {longitude}")
 
             # Fetch WeatherData & SoilData
             weather_data = WeatherData.objects.filter(
@@ -118,7 +103,7 @@ def process_csv_upload(file_name, user_id):
             ).order_by("-time").first()
 
             if not weather_data:
-                logging.warning(f"⛔ No WeatherData found for Row {index + 1}, fetching live data...")
+                logger.warning(f"⛔ No WeatherData found for Row {index + 1}, fetching live data...")
                 live_weather = fetch_latest_weather(lat=latitude, lon=longitude)
                 if live_weather:
                     weather_data = WeatherData.objects.create(
@@ -132,7 +117,7 @@ def process_csv_upload(file_name, user_id):
                         longitude=longitude
                     )
                 else:
-                    logging.error(f"⛔ Failed to fetch live weather for Row {index + 1}, skipping entry.")
+                    logger.error(f"⛔ Failed to fetch live weather for Row {index + 1}, skipping entry.")
                     continue
 
             if not soil_data:
@@ -151,7 +136,7 @@ def process_csv_upload(file_name, user_id):
             try:
                 crop = Crop.objects.get(name__iexact=crop_name)
             except Crop.DoesNotExist:
-                logging.error(f"⛔ ERROR: Crop '{crop_name}' not found for row {index + 1}, skipping entry.")
+                logger.error(f"⛔ ERROR: Crop '{crop_name}' not found for row {index + 1}, skipping entry.")
                 continue
 
             # AI Prediction using weather data as input
@@ -165,13 +150,13 @@ def process_csv_upload(file_name, user_id):
 
             predicted_soil_temp = predictions.get("linear_regression", [None])[0]
             if predicted_soil_temp is None:
-                logging.error(f"⛔ ERROR: Soil temp prediction failed for row {index + 1}. Skipping entry.")
+                logger.error(f"⛔ ERROR: Soil temp prediction failed for row {index + 1}. Skipping entry.")
                 continue
             predicted_soil_temp = float(predicted_soil_temp)
 
             raw_yield_prediction = predictions.get("decision_tree", [None])[0]
             if raw_yield_prediction is None:
-                logging.error(f"⛔ ERROR: Yield prediction failed for row {index + 1}. Skipping entry.")
+                logger.error(f"⛔ ERROR: Yield prediction failed for row {index + 1}. Skipping entry.")
                 continue
             raw_yield_prediction = float(raw_yield_prediction)
 
@@ -312,10 +297,11 @@ def process_csv_upload(file_name, user_id):
                 ai_model_version=ai_model_version
             )
             recommendations_created.append(recommendation.id)
+            logger.info(f"✅ Successfully processed row {index + 1} and created recommendation ID {recommendation.id}")
 
         except Exception as e:
-            logging.error(f"⛔ ERROR processing row {index + 1}: {str(e)}")
+            logger.error(f"⛔ ERROR processing row {index + 1}: {str(e)}")
             continue
 
+    logger.info(f"🚀 CSV processing complete. Total recommendations created: {len(recommendations_created)}")
     return {"message": "CSV processed", "created_recommendations": recommendations_created}
-
