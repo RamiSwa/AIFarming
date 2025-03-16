@@ -16,6 +16,7 @@ from django.utils import timezone
 from datetime import timedelta
 import pytz
 import io
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +33,25 @@ User = get_user_model()
 def process_csv_upload(file_name, user_id):
     """
     Processes a CSV file uploaded to Cloudflare R2.
-    - Directly uses boto3 client to fetch the file from Cloudflare R2.
+    - If a full URL is provided, extract the R2 key.
+    - Uses boto3 client to fetch the file from Cloudflare R2.
     """
     logger.info(f"🚀 Celery Task Started! File: {file_name}, User ID: {user_id}")
+    
+    # If the provided file_name is a full URL, extract the key
+    if file_name.startswith("http"):
+        parsed_url = urlparse(file_name)
+        # The path might start with a "/", so strip it
+        key = parsed_url.path.lstrip("/")
+        # Remove bucket prefix if present
+        bucket_name = os.getenv("R2_BUCKET_NAME")
+        if key.startswith(bucket_name):
+            key = key[len(bucket_name):].lstrip("/")
+        file_key = key
+        logger.info(f"Extracted file key from URL: {file_key}")
+    else:
+        file_key = file_name
+
     csv_content = None  # Placeholder for file content
 
     # Setup boto3 client for Cloudflare R2
@@ -48,13 +65,13 @@ def process_csv_upload(file_name, user_id):
 
     bucket_name = os.getenv("R2_BUCKET_NAME")
     try:
-        logger.info(f"🔍 Attempting to fetch file {file_name} from Cloudflare R2 (Bucket: {bucket_name})")
-        response = s3.get_object(Bucket=bucket_name, Key=file_name)
+        logger.info(f"🔍 Attempting to fetch file {file_key} from Cloudflare R2 (Bucket: {bucket_name})")
+        response = s3.get_object(Bucket=bucket_name, Key=file_key)
         csv_content = response['Body'].read()
-        logger.info(f"✅ Successfully fetched file {file_name} from Cloudflare R2.")
+        logger.info(f"✅ Successfully fetched file {file_key} from Cloudflare R2.")
     except Exception as e:
-        logger.error(f"⛔ File {file_name} NOT found in Cloudflare R2! Error: {str(e)}")
-        return {"error": f"File {file_name} not found in storage."}
+        logger.error(f"⛔ File {file_key} NOT found in Cloudflare R2! Error: {str(e)}")
+        return {"error": f"File {file_key} not found in storage."}
 
     # Convert CSV content to DataFrame
     try:
@@ -80,7 +97,7 @@ def process_csv_upload(file_name, user_id):
         logger.error(f"⛔ Missing required columns: {', '.join(missing_columns)}")
         return {"error": f"Missing required columns: {', '.join(missing_columns)}"}
 
-    logger.info(f"✅ Processing CSV {file_name} with columns: {df.columns.tolist()}")
+    logger.info(f"✅ Processing CSV {file_key} with columns: {df.columns.tolist()}")
     user = User.objects.get(id=user_id)
     recommendations_created = []
 
