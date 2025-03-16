@@ -16,6 +16,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def checkout(request):
     """
     Displays the checkout page.
@@ -55,7 +56,8 @@ def generate_pdf_report(request):
     try:
         report_request = ReportRequest.objects.get(id=report_request_id)
         report_data = report_request.report_data or {}
-        pdf_path = generate_pdf(
+        # generate_pdf now returns a full unique URL (including timestamp)
+        pdf_url = generate_pdf(
             report_request,
             predictions=report_data.get("predictions", {}),
             crop_details=report_data.get("crop_details", []),
@@ -70,16 +72,17 @@ def generate_pdf_report(request):
             future_climate=report_data.get("future_climate", {}),
             rotation_plan=report_data.get("rotation_plan", "")
         )
-        relative_path = os.path.relpath(pdf_path, settings.MEDIA_ROOT)
+        # Create the AIReport record, storing the PDF URL directly.
         ai_report = AIReport.objects.create(
             user=request.user,
-            report_file=relative_path,
+            report_file=pdf_url,
             payment=None,
             status="completed"
         )
-        send_report_email(pdf_path, request.user, report_request.location, None)
+        # Pass the generated pdf_url to send_report_email
+        send_report_email(report_request, request.user, report_request.location, None, pdf_url)
         del request.session["report_request_id"]
-        return render(request, 'monetization/report_success.html', {"report_url": ai_report.report_file.url})
+        return render(request, 'monetization/report_success.html', {"report_url": pdf_url})
     except Exception as e:
         logger.error(f"Error generating PDF report: {str(e)}")
         messages.error(request, "Error generating report. Please try again.")

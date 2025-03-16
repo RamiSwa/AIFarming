@@ -19,6 +19,7 @@ from monetization.services.pdf_generator import generate_pdf
 
 logger = logging.getLogger(__name__)
 
+
 def process_payment(request):
     if request.method == "POST":
         client_id, secret_key = get_paypal_credentials()
@@ -97,34 +98,30 @@ def payment_success(request):
     if subscription_id:
         subscription = Subscription.objects.filter(subscription_id=subscription_id).first()
         if subscription:
-            # If the subscription was canceled before, reactivate it
             if subscription.status == "canceled":
                 subscription.status = "active"
                 messages.success(request, "Your subscription has been reactivated!")
             else:
                 messages.info(request, "Your subscription is now active!")
-            # Update next billing date according to plan duration
             if subscription.plan.duration == "monthly":
                 subscription.next_billing_date = now() + timedelta(days=30)
             else:  # assuming annual
                 subscription.next_billing_date = now() + timedelta(days=365)
             subscription.save()
 
-            # Create a subscription order if not already present.
             order = Order.objects.filter(order_type="subscription", subscription=subscription).first()
             if not order:
                 try:
                     order = Order.objects.create(
                         user=request.user,
-                        subscription=subscription,  # Link the subscription
-                        payment=None,              # Not linked to a one-time payment
+                        subscription=subscription,
+                        payment=None,
                         order_type="subscription",
                         report_request=None,
                         total_amount=subscription.plan.price,
-                        currency="USD",  # adjust if needed
+                        currency="USD",
                         order_status="completed"
                     )
-                    # Refresh to pick up auto-generated fields (order_number, etc.)
                     order.refresh_from_db()
                 except IntegrityError:
                     order = Order.objects.filter(order_type="subscription", subscription=subscription).first()
@@ -166,7 +163,6 @@ def payment_success(request):
         payment.transaction_id = transaction_id
         payment.save()
 
-    # Create one-time payment order if not already present
     order = Order.objects.filter(payment=payment, order_type="one_time").first()
     if not order:
         try:
@@ -186,14 +182,15 @@ def payment_success(request):
 
     send_order_email(order, request.user)
 
-    # Optional: Process PDF report generation if a report request exists
+    # --- PDF Report Generation for one-time payments ---
     report_url = None
     report_request_id = request.session.get("report_request_id")
     if report_request_id and payment and payment.status == "completed":
         try:
             report_request = ReportRequest.objects.get(id=report_request_id)
             report_data = report_request.report_data or {}
-            pdf_path = generate_pdf(
+            # generate_pdf now returns the full file URL (with unique timestamp)
+            pdf_url = generate_pdf(
                 report_request,
                 predictions=report_data.get("predictions", {}),
                 crop_details=report_data.get("crop_details", []),
@@ -208,15 +205,16 @@ def payment_success(request):
                 future_climate=report_data.get("future_climate", {}),
                 rotation_plan=report_data.get("rotation_plan", "")
             )
-            relative_path = os.path.relpath(pdf_path, settings.MEDIA_ROOT)
+            # Create the AIReport record using the pdf_url directly
             ai_report = AIReport.objects.create(
                 user=request.user,
-                report_file=relative_path,
+                report_file=pdf_url,  # storing the URL (or you might store the file key if needed)
                 payment=payment,
                 status="completed"
             )
-            send_report_email(pdf_path, request.user, report_request.location, None)
-            report_url = ai_report.report_file.url
+            # Pass the pdf_url to the email service so it attaches the correct file
+            send_report_email(report_request, request.user, report_request.location, None, pdf_url)
+            report_url = pdf_url
             # Clear the report request from session
             del request.session["report_request_id"]
         except Exception as e:
