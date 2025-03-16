@@ -83,7 +83,7 @@ def generate_order_pdf(order, user):
     # ✅ 8️⃣ Footer Branding
     c.setFont("Helvetica-Oblique", 10)
     c.setFillGray(0.4)
-    footer_text = "AI Farming • Empowering Smart Agriculture • www.aifarming.com"
+    footer_text = "AI Farming • Empowering Smart Agriculture • smartfarmai.online"
     c.drawCentredString(width / 2, 30, footer_text)
     
     # ✅ 9️⃣ Finalize PDF & Save to Cloudflare R2

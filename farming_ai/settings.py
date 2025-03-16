@@ -318,7 +318,7 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')  # your email address
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')  # your app-specific password
 
 # Email recipient for contact notifications (set this in your .env file)
-CONTACT_NOTIFICATION_EMAIL = os.getenv('CONTACT_NOTIFICATION_EMAIL', default='info@ramireviews.com')
+CONTACT_NOTIFICATION_EMAIL = os.getenv('CONTACT_NOTIFICATION_EMAIL', default='contact@smartfarmai.online')
 
 
 # Path to the trained models directory

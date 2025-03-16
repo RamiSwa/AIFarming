@@ -316,7 +316,7 @@ def generate_pdf(report_request, predictions, crop_details, recommended_crops, r
         "Future expansions will include deeper predictions (e.g., 7–28cm soil temps).",
         styles["Normal"]
     ))
-    elements.append(Paragraph("For more info, contact support@yourcompany.com", styles["Normal"]))
+    elements.append(Paragraph("For more info, contact@smartfarmai.online", styles["Normal"]))
 
     # Build the document with header/footer.
     doc.build(elements, onFirstPage=_add_header_footer, onLaterPages=_add_header_footer)
