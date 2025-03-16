@@ -5,7 +5,6 @@ from django.contrib import messages
 from django.urls import reverse
 from decimal import Decimal
 from django.utils.timezone import now
-import os
 from django.conf import settings
 
 from monetization.models import ReportRequest, SubscriptionPlan, Coupon, AIReport
@@ -56,7 +55,8 @@ def generate_pdf_report(request):
     try:
         report_request = ReportRequest.objects.get(id=report_request_id)
         report_data = report_request.report_data or {}
-        # generate_pdf now returns a full unique URL (including timestamp)
+        
+        # generate_pdf returns the full public URL with a unique filename.
         pdf_url = generate_pdf(
             report_request,
             predictions=report_data.get("predictions", {}),
@@ -72,16 +72,21 @@ def generate_pdf_report(request):
             future_climate=report_data.get("future_climate", {}),
             rotation_plan=report_data.get("rotation_plan", "")
         )
-        # Create the AIReport record, storing the PDF URL directly.
+        
+        # Create the AIReport record using the full PDF URL.
         ai_report = AIReport.objects.create(
             user=request.user,
-            report_file=pdf_url,
+            report_file=pdf_url,  # Store the complete URL
             payment=None,
             status="completed"
         )
-        # Pass the generated pdf_url to send_report_email
+        
+        # Pass the generated pdf_url to send_report_email.
         send_report_email(report_request, request.user, report_request.location, None, pdf_url)
+        
+        # Clear the report request from session.
         del request.session["report_request_id"]
+        
         return render(request, 'monetization/report_success.html', {"report_url": pdf_url})
     except Exception as e:
         logger.error(f"Error generating PDF report: {str(e)}")
