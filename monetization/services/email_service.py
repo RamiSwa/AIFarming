@@ -19,7 +19,7 @@ def send_report_email(report_request, user, location, top_crop, pdf_url):
     """
 
     # Build the logo URL from your static files
-    logo_url = static("images/logo_AI_Farming.png")
+    logo_url = f"{settings.SITE_URL}{static('images/logo_AI_Farming.png')}"
 
     subject = f"Your AI Soil Analysis Report - {location}"
 
