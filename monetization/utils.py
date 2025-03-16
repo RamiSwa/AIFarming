@@ -14,6 +14,9 @@ from monetization.models import CropSuitability
 import openmeteo_requests
 import requests_cache
 from retry_requests import retry
+import logging
+logger = logging.getLogger(__name__)
+
 
 cache_session = requests_cache.CachedSession('.cache', expire_after=-1)
 retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
@@ -115,8 +118,19 @@ def get_lat_long(location):
 
 def get_soil_temp(lat, lon):
     url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&hourly=soil_temperature_0cm"
-    response = requests.get(url).json()
-    return response["hourly"]["soil_temperature_0cm"][-1] if "hourly" in response else None
+    try:
+        # Use your retry-enabled client for more robust handling
+        responses = openmeteo_client.weather_api(url, params={"latitude": lat, "longitude": lon, "hourly": "soil_temperature_0cm"})
+        if isinstance(responses, list) and responses:
+            response = responses[0]
+        else:
+            response = responses
+        return response["hourly"]["soil_temperature_0cm"][-1] if "hourly" in response else None
+    except Exception as e:
+        # Log the error and return a fallback value (or None)
+        logger.error("Error fetching soil temperature: %s", e)
+        return None
+
 
 def get_weather_data(lat, lon):
     """

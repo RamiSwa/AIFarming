@@ -6,6 +6,8 @@ from django.templatetags.static import static
 import logging
 import requests
 
+from monetization.services.order_pdf import generate_order_pdf
+
 logger = logging.getLogger(__name__)
 
 
