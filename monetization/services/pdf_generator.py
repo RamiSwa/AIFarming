@@ -25,7 +25,6 @@ from reportlab.lib.units import inch
 # 1) HELPER FUNCTIONS
 # =============================================================================
 
-# 1.1) Round Image Helper Function
 def make_image_round(input_path, output_path, size=(140, 140)):
     """
     Converts a square image into a round-cropped version and saves it.
@@ -49,20 +48,17 @@ def generate_pdf(report_request, predictions, crop_details, recommended_crops, r
                  regional_avg_yield, user_data, future_climate=None, rotation_plan=None):
     """
     Generates a premium AI-powered soil analysis report with multiple sections.
-
-    The final PDF is built in memory and then saved to Cloudflare R2 using Django's
-    default_storage (which is configured to use Cloudflare R2).
+    The PDF is built in memory and then saved to Cloudflare R2 using Django's
+    default_storage. The generated file URL is returned.
     """
-
-    # 2.1) Setup Document & Styles
-    # Build a subfolder path relative to storage: e.g. "reports/<username>/<YYYY>/<MM>/"
+    # Build a storage key for the file rather than using local MEDIA_ROOT.
     date_path = timezone.now().strftime("%Y/%m")
     subfolder = f"reports/{report_request.user.username}/{date_path}"
     timestamp_str = timezone.now().strftime("%Y%m%d_%H%M%S")
     filename = f"soil_report_{report_request.id}_{timestamp_str}.pdf"
     full_file_name = f"{subfolder}/{filename}"
 
-    # Use a BytesIO buffer for the PDF
+    # Create a BytesIO buffer for the PDF output.
     pdf_buffer = io.BytesIO()
     doc = SimpleDocTemplate(pdf_buffer, pagesize=letter)
     elements = []
@@ -92,7 +88,7 @@ def generate_pdf(report_request, predictions, crop_details, recommended_crops, r
         f"<b>Main Weather Risk:</b> {main_alert}<br/>"
         f"<b>Next Best Action:</b> See details below."
     )
-    print(f"DEBUG - Summary Text: {summary_text}")  # Check before adding to PDF
+    print(f"DEBUG - Summary Text: {summary_text}")
     elements.append(Paragraph(summary_text, styles["Normal"]))
     elements.append(Spacer(1, 20))
 
@@ -249,7 +245,7 @@ def generate_pdf(report_request, predictions, crop_details, recommended_crops, r
 
     # 2.11) Section 5: Visual Data Insights
     elements.append(Paragraph("<b>Visual Data Insights</b>", styles["Heading2"]))
-    # 2.11.1) Soil Temperature Graph (using an in-memory buffer)
+    # 2.11.1) Soil Temperature Graph using an in-memory buffer
     soil_temp_buffer = io.BytesIO()
     generate_soil_temp_graph(report_request, user_data, soil_temp_buffer)
     soil_temp_buffer.seek(0)
@@ -318,11 +314,11 @@ def generate_pdf(report_request, predictions, crop_details, recommended_crops, r
     ))
     elements.append(Paragraph("For more info, contact support@yourcompany.com", styles["Normal"]))
 
-    # Build the document with header/footer
+    # Build the document with header/footer.
     doc.build(elements, onFirstPage=_add_header_footer, onLaterPages=_add_header_footer)
     pdf_bytes = pdf_buffer.getvalue()
 
-    # Save the PDF to Cloudflare R2 via Django's default storage
+    # Save the PDF to Cloudflare R2 via Django's default storage.
     default_storage.save(full_file_name, ContentFile(pdf_bytes))
     file_url = default_storage.url(full_file_name)
     return file_url
