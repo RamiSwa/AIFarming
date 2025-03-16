@@ -20,6 +20,10 @@ from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, PageBreak
 )
 from reportlab.lib.units import inch
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 # =============================================================================
 # 1) HELPER FUNCTIONS
@@ -319,9 +323,13 @@ def generate_pdf(report_request, predictions, crop_details, recommended_crops, r
     pdf_bytes = pdf_buffer.getvalue()
 
     # Save the PDF to Cloudflare R2 via Django's default storage.
-    default_storage.save(full_file_name, ContentFile(pdf_bytes))
-    file_url = default_storage.url(full_file_name)
-    return file_url
+    saved_file_key = default_storage.save(full_file_name, ContentFile(pdf_buffer.getvalue()))
+    file_url = default_storage.url(saved_file_key)  # Get public URL from R2
+
+    logger.info(f"✅ PDF saved to Cloudflare R2: {file_url}")
+
+    return saved_file_key, file_url
+
 
 # =============================================================================
 # 3) HEADER, FOOTER, AND PREMIUM COVER PAGE FUNCTIONS

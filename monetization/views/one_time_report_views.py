@@ -56,8 +56,8 @@ def generate_pdf_report(request):
         report_request = ReportRequest.objects.get(id=report_request_id)
         report_data = report_request.report_data or {}
         
-        # generate_pdf returns the full public URL with a unique filename.
-        pdf_url = generate_pdf(
+        # generate_pdf now returns a tuple: (relative_file_key, full_public_url)
+        saved_file_key, pdf_url = generate_pdf(
             report_request,
             predictions=report_data.get("predictions", {}),
             crop_details=report_data.get("crop_details", []),
@@ -73,20 +73,19 @@ def generate_pdf_report(request):
             rotation_plan=report_data.get("rotation_plan", "")
         )
         
-        # Create the AIReport record using the full PDF URL.
+        # Store the relative file key in the AIReport record.
         ai_report = AIReport.objects.create(
             user=request.user,
-            report_file=pdf_url,  # Store the complete URL
+            report_file=saved_file_key,
             payment=None,
             status="completed"
         )
         
-        # Pass the generated pdf_url to send_report_email.
+        # Pass the full public URL to the email service.
         send_report_email(report_request, request.user, report_request.location, None, pdf_url)
         
         # Clear the report request from session.
         del request.session["report_request_id"]
-        
         return render(request, 'monetization/report_success.html', {"report_url": pdf_url})
     except Exception as e:
         logger.error(f"Error generating PDF report: {str(e)}")

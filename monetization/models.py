@@ -12,6 +12,8 @@ from monetization.services.order_pdf import generate_order_pdf
 
 
 from accounts.utils import send_notification
+from django.core.files.storage import default_storage
+
 
 
 
@@ -204,7 +206,7 @@ class Order(models.Model):
         """Generates a receipt PDF & stores the URL."""
         pdf_data = generate_order_pdf(self, self.user)
         self.report_pdf.save(f"{self.order_number}.pdf", ContentFile(pdf_data), save=False)
-        self.receipt_url = f"/media/orders_pdfs/{self.order_number}.pdf"
+        self.receipt_url = default_storage.url(self.report_pdf.name)
         self.save()
 
     def __str__(self):
