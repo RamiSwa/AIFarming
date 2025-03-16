@@ -32,7 +32,12 @@ from django.db.models import Avg, Count
 import random
 from collections import defaultdict
 from django.db.models.functions import TruncDate
+import os
+import logging
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 
+logger = logging.getLogger(__name__)
 
 
 import json
@@ -535,25 +540,29 @@ class FileUploadAPIView(APIView):
         if not file_obj:
             return Response({"error": "No file provided. Please upload a valid CSV file."}, status=400)
 
-        # ✅ Save File to Shared `/app/media/uploads/`
-        upload_dir = os.path.join(settings.MEDIA_ROOT, "uploads")
-        os.makedirs(upload_dir, exist_ok=True)  # ✅ Ensure directory exists
+        # ✅ Build dynamic folder structure (Cloudflare R2 does NOT use local paths)
+        from datetime import datetime
+        today_str = datetime.now().strftime('%Y-%m-%d')
+        username = request.user.username if request.user.is_authenticated else "anonymous"
 
+        # ✅ Construct relative path (R2 does NOT support absolute paths)
+        upload_dir = os.path.join("uploads", today_str, username)
         file_path = os.path.join(upload_dir, file_obj.name)
-        with open(file_path, "wb+") as destination:
-            for chunk in file_obj.chunks():
-                destination.write(chunk)
 
-        logging.info(f"✅ File {file_obj.name} saved at {file_path}")
+        # ✅ Save file using Django’s default storage (Cloudflare R2)
+        saved_file_name = default_storage.save(file_path, ContentFile(file_obj.read()))
+        file_url = default_storage.url(saved_file_name)  # ✅ Get public Cloudflare R2 URL
+
+        logger.info(f"✅ File {file_obj.name} uploaded to Cloudflare R2: {file_url}")
 
         # ✅ Trigger Async Celery Task
-        task = process_csv_upload.delay(file_path, request.user.id)
+        task = process_csv_upload.delay(file_url, request.user.id)  # ✅ Pass URL instead of file path
 
         return Response({
             "message": "CSV processing started asynchronously.",
+            "file_url": file_url,  # ✅ Return public file URL
             "task_id": task.id
         }, status=202)
-
 
 
 

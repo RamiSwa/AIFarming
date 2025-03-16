@@ -17,6 +17,14 @@ import numpy as np
 from reportlab.lib.units import inch
 from PIL import Image as PILImage, ImageDraw
 import json
+from django.utils.timezone import now
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+import io
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 # =============================================================================
 # 1) HELPER FUNCTIONS
@@ -54,28 +62,18 @@ def generate_pdf(report_request, predictions, crop_details, recommended_crops, r
 
     # 2.1) Setup Document & Styles
     # Build a subfolder path: e.g. "reports/<username>/<YYYY>/<MM>/"
-    date_path = timezone.now().strftime("%Y/%m")
-    subfolder = os.path.join("reports", report_request.user.username, date_path)
-
-    # Create the subfolder if it doesn't exist
-    full_folder_path = os.path.join(settings.MEDIA_ROOT, subfolder)
-    os.makedirs(full_folder_path, exist_ok=True)
-
-    # Construct a unique filename using the report_request ID and a timestamp
-    timestamp_str = timezone.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"soil_report_{report_request.id}_{timestamp_str}.pdf"
-    file_path = os.path.join(full_folder_path, filename)
+    date_path = now().strftime("%Y/%m")  # Year/Month folder structure
+    filename = f"soil_report_{report_request.id}_{now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    file_path = f"reports/{report_request.user.username}/{date_path}/{filename}"  # ✅ R2-compatible path
 
     # Setup the document
-    doc = SimpleDocTemplate(file_path, pagesize=letter)
+    # ✅ 2️⃣ Create the PDF in memory (NO local storage usage)
+    pdf_buffer = io.BytesIO()
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=letter)
     elements = []
     styles = getSampleStyleSheet()
-    wrap_style = ParagraphStyle(
-        name='WrapStyle',
-        parent=styles['Normal'],
-        fontSize=8,
-        leading=10
-    )
+    wrap_style = ParagraphStyle(name="WrapStyle", parent=styles["Normal"], fontSize=10, leading=12)
+
 
     # 2.2) Premium Cover Page
     elements.extend(_build_premium_cover_page(report_request, user_data))
@@ -319,9 +317,16 @@ def generate_pdf(report_request, predictions, crop_details, recommended_crops, r
     ))
     elements.append(Paragraph("For more info, contact support@yourcompany.com", styles["Normal"]))
 
-    # Build the document with header/footer
-    doc.build(elements, onFirstPage=_add_header_footer, onLaterPages=_add_header_footer)
-    return file_path
+    # ✅ 10️⃣ Build & Save the PDF to Cloudflare R2
+    doc.build(elements)
+    pdf_buffer.seek(0)  # Reset buffer position
+
+    saved_file_name = default_storage.save(file_path, ContentFile(pdf_buffer.getvalue()))  # ✅ Save in R2
+    file_url = default_storage.url(saved_file_name)  # ✅ Get public URL from R2
+
+    logger.info(f"✅ PDF saved to Cloudflare R2: {file_url}")
+
+    return file_url  # ✅ Return Cloudflare R2 file URL
 
 # =============================================================================
 # 3) HEADER, FOOTER, AND PREMIUM COVER PAGE FUNCTIONS

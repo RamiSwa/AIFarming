@@ -21,7 +21,7 @@ from django.utils.timezone import now
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import math
-
+import os
 
 
 
@@ -171,6 +171,8 @@ class ManualSoilDataEntryAPIView(APIView):
 
 
 # ✅ CSV Upload Endpoint
+
+# ✅ CSV Upload Endpoint (Final Fixed Version)
 class CSVUploadAPIView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -182,46 +184,36 @@ class CSVUploadAPIView(APIView):
 
             file = request.FILES["file"]
 
-            # Build a custom folder path: "uploadCSVSOIL/YYYY-MM-DD/username/"
-            from datetime import datetime
-            import os
-
+            # ✅ Build a dynamic folder structure for user uploads
             today_str = datetime.now().strftime('%Y-%m-%d')
             username = request.user.username if request.user.is_authenticated else "anonymous"
-            # Construct relative upload path (within MEDIA_ROOT)
+
+            # ✅ Use a relative file path (Cloudflare R2 does NOT support absolute paths)
             upload_dir = os.path.join("uploadCSVSOIL", today_str, username)
-            # Create the full directory path under MEDIA_ROOT
-            full_upload_dir = os.path.join(settings.MEDIA_ROOT, upload_dir)
-            os.makedirs(full_upload_dir, exist_ok=True)
-            
-            # Create the custom file name with the folder structure
             custom_file_name = os.path.join(upload_dir, file.name)
 
-            # ✅ Save file properly using Django's default storage
-            # Save file using Django's default storage
+            # ✅ Save the file properly using Django's default storage (Cloudflare R2)
             file_name = default_storage.save(custom_file_name, ContentFile(file.read()))
-            file_path = default_storage.path(file_name)
+            file_url = default_storage.url(file_name)  # ✅ Get URL instead of absolute path
 
-            logger.info(f"File successfully uploaded: {file_path}")
+            logger.info(f"✅ File successfully uploaded: {file_url}")
 
-            # ✅ Check if file exists before processing
-            if not default_storage.exists(file_name):
-                logger.error(f"File not found after saving: {file_path}")
-                return Response({"status": "error", "message": "Failed to save file."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-            # ✅ Process CSV data
-            success, message = process_csv_data(file_path, user=request.user)
+            # ✅ Process CSV data (pass file_name instead of file_path)
+            success, message = process_csv_data(file_name, user=request.user)
 
             if not success:
                 return Response({"status": "error", "message": message}, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response({"status": "success", "message": "CSV file uploaded and processed.", "file_url": file_path},
-                            status=status.HTTP_201_CREATED)
+            return Response({
+                "status": "success",
+                "message": "CSV file uploaded and processed.",
+                "file_url": file_url  # ✅ Return Cloudflare R2 URL
+            }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            logger.error(f"Error uploading CSV: {e}")
-            return Response({"status": "error", "message": f"Failed to process CSV file: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            logger.error(f"🚨 Error uploading CSV: {e}")
+            return Response({"status": "error", "message": f"Failed to process CSV file: {str(e)}"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # ✅ Sensor Data Ingestion Endpoint
 class SensorDataIngestionAPIView(APIView):

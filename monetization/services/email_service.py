@@ -4,13 +4,24 @@ from django.core.mail import EmailMessage
 from django.conf import settings
 from django.templatetags.static import static
 from .order_pdf import generate_order_pdf
+import logging
+import os
+import requests
+from django.core.files.storage import default_storage
+
+logger = logging.getLogger(__name__)
 
 
-def send_report_email(pdf_path, user, location, top_crop):
+def send_report_email(report_request, user, location, top_crop):
     """
     Sends the generated PDF report to the user's email address using HTML formatting.
     Includes a disclaimer section at the end of the message.
     """
+
+    # ✅ 1️⃣ Get the PDF URL from Cloudflare R2
+    pdf_path = f"reports/{user.username}/{report_request.created_at.strftime('%Y/%m')}/soil_report_{report_request.id}.pdf"
+    pdf_url = default_storage.url(pdf_path)
+
 
     # Build the logo URL from your static files
     logo_url = static("images/logo_AI_Farming.png")
@@ -77,25 +88,29 @@ def send_report_email(pdf_path, user, location, top_crop):
     </html>
     """
 
-    from_email = "info@ramireviews.com"  # or settings.EMAIL_HOST_USER
+    from_email = settings.EMAIL_HOST_USER
     to_email = [user.email]
-
     email = EmailMessage(subject, body_html, from_email, to_email)
-    email.content_subtype = "html"  # Send as HTML
+    email.content_subtype = "html"
 
-    # Attach the PDF report
-    with open(pdf_path, "rb") as f:
-        email.attach("Soil_Report.pdf", f.read(), "application/pdf")
+    # ✅ 4️⃣ Download the PDF from Cloudflare R2 and attach it
+    response = requests.get(pdf_url)
+    if response.status_code == 200:
+        email.attach("Soil_Report.pdf", response.content, "application/pdf")
+        logger.info(f"✅ Attached PDF from {pdf_url}")
+    else:
+        logger.error(f"❌ Failed to download report from {pdf_url} (Status {response.status_code})")
 
     email.send()
+    logger.info(f"📧 Soil Report Email sent to {user.email}")
 
 # monetization/email_service.py
 def send_order_email(order, user):
     """
     Generates a professional order confirmation PDF and sends it via email.
     """
-    # 1) Generate the PDF bytes
-    pdf_content = generate_order_pdf(order, user)
+    # ✅ 1️⃣ Generate & Save the PDF in Cloudflare R2
+    pdf_url = generate_order_pdf(order, user)
     
     # Use getattr to safely retrieve discount_code, defaulting to None if it doesn't exist.
     discount_code = getattr(order, 'discount_code', None)
@@ -163,8 +178,13 @@ def send_order_email(order, user):
     email = EmailMessage(subject, body_html, from_email, to_email)
     email.content_subtype = "html"
 
-    # 3) Attach the order confirmation PDF
-    filename = f"Order_{order.order_number}.pdf"
-    email.attach(filename, pdf_content, "application/pdf")
+    # ✅ 4️⃣ Attach the PDF from Cloudflare R2
+    response = requests.get(pdf_url)
+    if response.status_code == 200:
+        email.attach(f"Order_{order.order_number}.pdf", response.content, "application/pdf")
+        logger.info(f"✅ Attached Order PDF from {pdf_url}")
+    else:
+        logger.error(f"❌ Failed to download Order PDF from {pdf_url} (Status {response.status_code})")
 
     email.send()
+    logger.info(f"📧 Order Confirmation Email sent to {user.email}")
