@@ -15,6 +15,10 @@ from .utils import load_model, load_pipeline, preprocess_input_data, make_predic
 from django.utils import timezone
 from datetime import timedelta
 import pytz
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+import io
+
 
 # Load models and pipeline
 pipeline = load_pipeline("feature_engineering_pipeline.pkl")
@@ -26,20 +30,23 @@ models = {
 User = get_user_model()
 
 @shared_task
-def process_csv_upload(file_path, user_id):
+def process_csv_upload(file_name, user_id):
+    """
+    Processes a CSV file uploaded to Cloudflare R2.
+    - Uses Django Storage API to fetch & read the file (no absolute paths).
+    """
     try:
-        # Ensure the file is fully written (max wait: 10s)
-        for _ in range(10):
-            if os.path.exists(file_path):
-                break
-            time.sleep(1)
+        # ✅ Ensure file exists in storage
+        if not default_storage.exists(file_name):
+            logging.error(f"⛔ File not found in Cloudflare R2: {file_name}")
+            return {"error": f"File {file_name} not found."}
 
-        if not os.path.exists(file_path):
-            logging.error(f"⛔ CSV file not found: {file_path}")
-            return {"error": f"File {file_path} not found."}
-
-        df = pd.read_csv(file_path)
-        df.columns = df.columns.str.strip()
+        # ✅ Read the file using Django Storage API
+        with default_storage.open(file_name, "rb") as csv_file:
+            csv_content = csv_file.read()
+        
+        df = pd.read_csv(io.BytesIO(csv_content))  # Convert bytes to DataFrame
+        df.columns = df.columns.str.strip()  # Ensure clean column names
 
         required_columns = {
             "time",
@@ -56,7 +63,7 @@ def process_csv_upload(file_path, user_id):
             logging.error(f"⛔ Missing required columns: {', '.join(missing_columns)}")
             return {"error": f"Missing required columns: {', '.join(missing_columns)}"}
 
-        logging.info(f"✅ Processing CSV {file_path} with columns: {df.columns.tolist()}")
+        logging.info(f"✅ Processing CSV {file_name} with columns: {df.columns.tolist()}")
 
         user = User.objects.get(id=user_id)
         recommendations_created = []
