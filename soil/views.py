@@ -171,8 +171,6 @@ class ManualSoilDataEntryAPIView(APIView):
 
 
 # ✅ CSV Upload Endpoint
-
-# ✅ CSV Upload Endpoint (Final Fixed Version)
 class CSVUploadAPIView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -184,22 +182,23 @@ class CSVUploadAPIView(APIView):
 
             file = request.FILES["file"]
 
-            # ✅ Build a dynamic folder structure for user uploads
+            # Build a dynamic folder structure for user uploads
             today_str = datetime.now().strftime('%Y-%m-%d')
             username = request.user.username if request.user.is_authenticated else "anonymous"
 
-            # ✅ Use a relative file path (Cloudflare R2 does NOT support absolute paths)
+            # Use a relative file path (Cloudflare R2 does NOT support absolute paths)
             upload_dir = os.path.join("uploadCSVSOIL", today_str, username)
             custom_file_name = os.path.join(upload_dir, file.name)
 
-            # ✅ Save the file properly using Django's default storage (Cloudflare R2)
+            # Save the file properly using Django's default storage (Cloudflare R2)
             file_name = default_storage.save(custom_file_name, ContentFile(file.read()))
-            file_url = default_storage.url(file_name)  # ✅ Get URL instead of absolute path
+            file_url = default_storage.url(file_name)  # Get URL instead of absolute path
 
             logger.info(f"✅ File successfully uploaded: {file_url}")
 
-            # ✅ Process CSV data (pass file_name instead of file_path)
-            success, message = process_csv_data(file_name, user=request.user)
+            # Open file from Cloudflare R2 and process CSV data
+            with default_storage.open(file_name, "rb") as csv_file:
+                success, message = process_csv_data(csv_file, user=request.user)
 
             if not success:
                 return Response({"status": "error", "message": message}, status=status.HTTP_400_BAD_REQUEST)
@@ -207,13 +206,15 @@ class CSVUploadAPIView(APIView):
             return Response({
                 "status": "success",
                 "message": "CSV file uploaded and processed.",
-                "file_url": file_url  # ✅ Return Cloudflare R2 URL
+                "file_url": file_url  # Return Cloudflare R2 URL
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
             logger.error(f"🚨 Error uploading CSV: {e}")
             return Response({"status": "error", "message": f"Failed to process CSV file: {str(e)}"},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 
 # ✅ Sensor Data Ingestion Endpoint
 class SensorDataIngestionAPIView(APIView):
