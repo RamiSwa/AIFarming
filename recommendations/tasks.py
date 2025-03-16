@@ -104,10 +104,15 @@ def process_csv_upload(file_name, user_id):
     for index, row in df.iterrows():
         try:
             logger.debug(f"📌 Processing Row {index + 1}: {row.to_dict()}")
+
             # Convert `time` to a timezone-aware datetime object
             time_str = str(row["time"]).strip()
-            naive_time = date_parser.parse(time_str)
-            time_obj = make_aware(naive_time, pytz.UTC)
+            parsed_time = date_parser.parse(time_str)
+            if parsed_time.tzinfo is None:
+                time_obj = make_aware(parsed_time, pytz.UTC)
+            else:
+                time_obj = parsed_time.astimezone(pytz.UTC)
+
             latitude, longitude = float(row["latitude"]), float(row["longitude"])
             logger.info(f"📌 Row {index + 1} ➡ Parsed Time: {time_obj}, Lat: {latitude}, Lon: {longitude}")
 
