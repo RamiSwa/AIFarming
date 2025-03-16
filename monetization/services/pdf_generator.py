@@ -404,22 +404,43 @@ def _add_header_footer(canvas_obj, doc):
 # =============================================================================
 
 def generate_soil_temp_graph(report_request, user_data, file_path):
+    """
+    Generates a soil temperature trends graph and saves it.
+    """
+
+    # ✅ Ensure the directory exists before saving the graph
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory, exist_ok=True)  # ✅ Create the directory if it doesn't exist
+
+    # ✅ Generate dummy temperature data for 7 days
     days = np.arange(1, 8)
     ai_temp_values = np.random.uniform(low=15, high=30, size=7)
+
     plt.figure(figsize=(7, 4))
     plt.plot(days, ai_temp_values, marker="o", linestyle="-", color="blue", label="AI Predicted")
+
+    # ✅ Add Measured Temperature Line (if exists)
     measured_temp = user_data.get("measured_soil_temp", None)
     if measured_temp is not None:
         plt.axhline(y=float(measured_temp), color="red", linestyle="--", label="Measured Soil Temp")
+
     plt.xlabel("Days", fontsize=12, fontweight='bold')
     plt.ylabel("Soil Temperature (°C)", fontsize=12, fontweight='bold')
     plt.title("Soil Temperature Trends (7 Days)", fontsize=14, fontweight='bold')
     plt.grid(True)
     plt.legend()
+
+    # ✅ Save Graph (Now the directory exists)
     plt.savefig(file_path, dpi=300, bbox_inches="tight")
     plt.close()
 
+    print(f"✅ Soil temp graph saved: {file_path}") 
+
 def generate_stacked_yield_chart(recommended_crops, regional_avg_yield, file_path):
+    
+    
+    
     if not recommended_crops:
         crops = ["No Crops"]
         hist_values = [0]
