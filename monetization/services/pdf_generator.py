@@ -2,7 +2,16 @@
 # =============================================================================
 # 0) IMPORTS & LIBRARY SETUP
 # =============================================================================
+import os
+import io
+import json
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image as PILImage, ImageDraw
 from django.utils import timezone
+from django.conf import settings
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
@@ -10,21 +19,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, PageBreak
 )
-import os
-from django.conf import settings
-import matplotlib.pyplot as plt
-import numpy as np
 from reportlab.lib.units import inch
-from PIL import Image as PILImage, ImageDraw
-import json
-from django.utils.timezone import now
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-import io
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 # =============================================================================
 # 1) HELPER FUNCTIONS
@@ -49,31 +44,35 @@ def make_image_round(input_path, output_path, size=(140, 140)):
 # 2) MAIN PDF GENERATION FUNCTION
 # =============================================================================
 
-def generate_pdf(report_request, predictions, crop_details, recommended_crops, risk_assessment, mitigation_strategies, ai_alerts, next_best_action, historical_weather, regional_avg_yield, user_data, future_climate=None, rotation_plan=None):
+def generate_pdf(report_request, predictions, crop_details, recommended_crops, risk_assessment, 
+                 mitigation_strategies, ai_alerts, next_best_action, historical_weather, 
+                 regional_avg_yield, user_data, future_climate=None, rotation_plan=None):
     """
     Generates a premium AI-powered soil analysis report with multiple sections.
-    
-    Premium Enhancements include:
-      - Branded cover page with logo, tagline, and farmland background.
-      - Future climate predictions, crop rotation plan, and additional visuals.
-      - Stacked yield chart and monthly precipitation chart based on real data.
+
+    The final PDF is built in memory and then saved to Cloudflare R2 using Django's
+    default_storage (which is configured to use Cloudflare R2).
     """
 
-
     # 2.1) Setup Document & Styles
-    # Build a subfolder path: e.g. "reports/<username>/<YYYY>/<MM>/"
-    date_path = now().strftime("%Y/%m")  # Year/Month folder structure
-    filename = f"soil_report_{report_request.id}_{now().strftime('%Y%m%d_%H%M%S')}.pdf"
-    file_path = f"reports/{report_request.user.username}/{date_path}/{filename}"  # ✅ R2-compatible path
+    # Build a subfolder path relative to storage: e.g. "reports/<username>/<YYYY>/<MM>/"
+    date_path = timezone.now().strftime("%Y/%m")
+    subfolder = f"reports/{report_request.user.username}/{date_path}"
+    timestamp_str = timezone.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"soil_report_{report_request.id}_{timestamp_str}.pdf"
+    full_file_name = f"{subfolder}/{filename}"
 
-    # Setup the document
-    # ✅ 2️⃣ Create the PDF in memory (NO local storage usage)
+    # Use a BytesIO buffer for the PDF
     pdf_buffer = io.BytesIO()
     doc = SimpleDocTemplate(pdf_buffer, pagesize=letter)
     elements = []
     styles = getSampleStyleSheet()
-    wrap_style = ParagraphStyle(name="WrapStyle", parent=styles["Normal"], fontSize=10, leading=12)
-
+    wrap_style = ParagraphStyle(
+        name='WrapStyle',
+        parent=styles['Normal'],
+        fontSize=8,
+        leading=10
+    )
 
     # 2.2) Premium Cover Page
     elements.extend(_build_premium_cover_page(report_request, user_data))
@@ -93,8 +92,7 @@ def generate_pdf(report_request, predictions, crop_details, recommended_crops, r
         f"<b>Main Weather Risk:</b> {main_alert}<br/>"
         f"<b>Next Best Action:</b> See details below."
     )
-    print(f"DEBUG - Summary Text: {summary_text}")  # ✅ Check before adding to PDF
-
+    print(f"DEBUG - Summary Text: {summary_text}")  # Check before adding to PDF
     elements.append(Paragraph(summary_text, styles["Normal"]))
     elements.append(Spacer(1, 20))
 
@@ -251,23 +249,26 @@ def generate_pdf(report_request, predictions, crop_details, recommended_crops, r
 
     # 2.11) Section 5: Visual Data Insights
     elements.append(Paragraph("<b>Visual Data Insights</b>", styles["Heading2"]))
-    # 2.11.1) Soil Temperature Graph
-    graph_path = os.path.join(settings.MEDIA_ROOT, "reports", f"{report_request.user.username}_soil_temp_graph.png")
-    generate_soil_temp_graph(report_request, user_data, graph_path)
+    # 2.11.1) Soil Temperature Graph (using an in-memory buffer)
+    soil_temp_buffer = io.BytesIO()
+    generate_soil_temp_graph(report_request, user_data, soil_temp_buffer)
+    soil_temp_buffer.seek(0)
     elements.append(Paragraph("<b>Soil Temperature Trends (7 Days):</b>", styles["Normal"]))
-    elements.append(Image(graph_path, width=400, height=250))
+    elements.append(Image(soil_temp_buffer, width=400, height=250))
     elements.append(Spacer(1, 20))
     # 2.11.2) Stacked Yield Comparison Chart
-    yield_chart_path = os.path.join(settings.MEDIA_ROOT, "reports", f"{report_request.user.username}_yield_comparison.png")
-    generate_stacked_yield_chart(recommended_crops, regional_avg_yield, yield_chart_path)
+    yield_chart_buffer = io.BytesIO()
+    generate_stacked_yield_chart(recommended_crops, regional_avg_yield, yield_chart_buffer)
+    yield_chart_buffer.seek(0)
     elements.append(Paragraph("<b>Stacked Yield Comparison:</b>", styles["Normal"]))
-    elements.append(Image(yield_chart_path, width=400, height=250))
+    elements.append(Image(yield_chart_buffer, width=400, height=250))
     elements.append(Spacer(1, 20))
     # 2.11.3) Monthly Precipitation Chart
-    monthly_precip_path = os.path.join(settings.MEDIA_ROOT, "reports", f"{report_request.user.username}_monthly_precip.png")
-    generate_monthly_precip_chart(historical_weather, monthly_precip_path)
+    monthly_precip_buffer = io.BytesIO()
+    generate_monthly_precip_chart(historical_weather, monthly_precip_buffer)
+    monthly_precip_buffer.seek(0)
     elements.append(Paragraph("<b>Monthly Precipitation:</b>", styles["Normal"]))
-    elements.append(Image(monthly_precip_path, width=400, height=250))
+    elements.append(Image(monthly_precip_buffer, width=400, height=250))
     elements.append(Spacer(1, 20))
 
     # 2.12) Section 6: AI Model Details & Transparency
@@ -317,22 +318,15 @@ def generate_pdf(report_request, predictions, crop_details, recommended_crops, r
     ))
     elements.append(Paragraph("For more info, contact support@yourcompany.com", styles["Normal"]))
 
-    # ✅ 10️⃣ Build & Save the PDF to Cloudflare R2
-    doc.build(elements)
-    pdf_buffer.seek(0)  # Reset buffer position
+    # Build the document with header/footer
+    doc.build(elements, onFirstPage=_add_header_footer, onLaterPages=_add_header_footer)
+    pdf_bytes = pdf_buffer.getvalue()
 
-    saved_file_name = default_storage.save(file_path, ContentFile(pdf_buffer.getvalue()))  # ✅ Save in R2
-    
-        # ✅ 7️⃣ Verify Upload
-    if not default_storage.exists(saved_file_name):
-        logger.error(f"⛔ Failed to save PDF to Cloudflare R2: {saved_file_name}")
-        return {"error": "Failed to save PDF to storage."}
-    
-    file_url = default_storage.url(saved_file_name)  # ✅ Get public URL from R2
+    # Save the PDF to Cloudflare R2 via Django's default storage
+    default_storage.save(full_file_name, ContentFile(pdf_bytes))
+    file_url = default_storage.url(full_file_name)
+    return file_url
 
-    logger.info(f"✅ PDF saved to Cloudflare R2: {file_url}")
-
-    return file_url  # ✅ Return Cloudflare R2 file URL
 # =============================================================================
 # 3) HEADER, FOOTER, AND PREMIUM COVER PAGE FUNCTIONS
 # =============================================================================
@@ -403,44 +397,29 @@ def _add_header_footer(canvas_obj, doc):
 # 4) CHART GENERATION FUNCTIONS
 # =============================================================================
 
-def generate_soil_temp_graph(report_request, user_data, file_path):
+def generate_soil_temp_graph(report_request, user_data, file_buffer):
     """
-    Generates a soil temperature trends graph and saves it.
+    Generates a soil temperature trends graph over 7 days and saves it to the provided buffer.
     """
-
-    # ✅ Ensure the directory exists before saving the graph
-    directory = os.path.dirname(file_path)
-    if not os.path.exists(directory):
-        os.makedirs(directory, exist_ok=True)  # ✅ Create the directory if it doesn't exist
-
-    # ✅ Generate dummy temperature data for 7 days
     days = np.arange(1, 8)
     ai_temp_values = np.random.uniform(low=15, high=30, size=7)
-
     plt.figure(figsize=(7, 4))
     plt.plot(days, ai_temp_values, marker="o", linestyle="-", color="blue", label="AI Predicted")
-
-    # ✅ Add Measured Temperature Line (if exists)
     measured_temp = user_data.get("measured_soil_temp", None)
     if measured_temp is not None:
         plt.axhline(y=float(measured_temp), color="red", linestyle="--", label="Measured Soil Temp")
-
     plt.xlabel("Days", fontsize=12, fontweight='bold')
     plt.ylabel("Soil Temperature (°C)", fontsize=12, fontweight='bold')
     plt.title("Soil Temperature Trends (7 Days)", fontsize=14, fontweight='bold')
     plt.grid(True)
     plt.legend()
-
-    # ✅ Save Graph (Now the directory exists)
-    plt.savefig(file_path, dpi=300, bbox_inches="tight")
+    plt.savefig(file_buffer, dpi=300, bbox_inches="tight")
     plt.close()
 
-    print(f"✅ Soil temp graph saved: {file_path}") 
-
-def generate_stacked_yield_chart(recommended_crops, regional_avg_yield, file_path):
-    
-    
-    
+def generate_stacked_yield_chart(recommended_crops, regional_avg_yield, file_buffer):
+    """
+    Generates a stacked yield comparison chart and saves it to the provided buffer.
+    """
     if not recommended_crops:
         crops = ["No Crops"]
         hist_values = [0]
@@ -466,10 +445,10 @@ def generate_stacked_yield_chart(recommended_crops, regional_avg_yield, file_pat
     plt.title("Stacked Yield Comparison")
     plt.legend()
     plt.tight_layout()
-    plt.savefig(file_path, dpi=300)
+    plt.savefig(file_buffer, dpi=300)
     plt.close()
 
-def generate_monthly_precip_chart(historical_weather, file_path):
+def generate_monthly_precip_chart(historical_weather, file_buffer):
     """
     Creates a bar chart showing monthly precipitation using real historical data.
     This simplistic approach divides total precipitation by 60 (5 years * 12 months)
@@ -485,5 +464,5 @@ def generate_monthly_precip_chart(historical_weather, file_path):
     plt.ylabel("Precipitation (mm)")
     plt.title("Monthly Precipitation (Approximate)")
     plt.tight_layout()
-    plt.savefig(file_path, dpi=300)
+    plt.savefig(file_buffer, dpi=300)
     plt.close()
