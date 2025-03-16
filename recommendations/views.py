@@ -566,16 +566,17 @@ class FileUploadAPIView(APIView):
 
 
 
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 class TaskStatusAPIView(APIView):
     def get(self, request, task_id, *args, **kwargs):
-        """Check the status of a Celery task using the task ID."""
-        task = AsyncResult(task_id)  # Fetch task status from Celery
+        task = AsyncResult(task_id)
         response_data = {
             "task_id": task_id,
-            "status": task.status,  # Possible values: PENDING, SUCCESS, FAILURE
-            "result": task.result if task.successful() else None,  # Only show result if successful
+            "status": task.status,
+            "result": task.result if task.successful() else None,
         }
         return Response(response_data)
 
