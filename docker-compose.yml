@@ -28,12 +28,11 @@ services:
     env_file:
       - .env  # ✅ Use .env instead of hardcoding
     restart: always  # ✅ Auto-restart on failure
-
   cache:
     image: redis:latest
     container_name: redis_cache_fresh
     ports:
-      - "6380:6379"
+      - "6380:6379"  # ✅ External: 6380, Internal (inside Docker): 6379
     restart: always  # ✅ Ensure Redis stays running
 
   celery:
@@ -48,9 +47,26 @@ services:
       - web
       - database
       - cache
+    environment:
+      - REDIS_URL=redis://cache:6379/0  # ✅ Use `cache:6379/0` inside Docker!
+      - CELERY_RESULT_BACKEND=redis://cache:6379/0
     env_file:
-      - .env  # ✅ Use .env
+      - .env  # ✅ Use environment variables
     restart: always  # ✅ Auto-restart on crash
+
+  celery-beat:
+    build: .
+    container_name: celery_beat_fresh
+    command: celery -A farming_ai beat --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - cache
+      - celery
+    environment:
+      - REDIS_URL=redis://cache:6379/0  # ✅ Use Redis as Celery Beat broker
+      - CELERY_RESULT_BACKEND=redis://cache:6379/0
+    restart: always
 
 # Define shared volumes
 volumes:

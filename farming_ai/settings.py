@@ -343,13 +343,12 @@ TRAINED_MODELS_DIR = os.path.join(BASE_DIR, "trained_models")
 # OpenCage API Key
 OPENCAGE_API_KEY = os.getenv("OPENCAGE_API_KEY", default="")
 # Celery settings
-# Celery Os.getenvuration
-CELERY_BROKER_URL = "redis://cache:6379/0"  # Use Redis as the broker
+
+# ✅ Ensure Redis is correctly used inside Docker
+CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://cache:6379/0")  # Use `cache` inside Docker
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_BACKEND = "django-db"
-
-
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://cache:6379/0")  # Store results in Redis
 
 
 
