@@ -13,7 +13,6 @@ services:
       - ./media:/app/media
     depends_on:
       - database
-      - cache
     env_file:
       - .env  # ✅ Load environment variables
     restart: always  # ✅ Auto-restart if it crashes
@@ -28,12 +27,6 @@ services:
     env_file:
       - .env  # ✅ Use .env instead of hardcoding
     restart: always  # ✅ Auto-restart on failure
-  cache:
-    image: redis:latest
-    container_name: redis_cache_fresh
-    ports:
-      - "6380:6379"  # ✅ External: 6380, Internal (inside Docker): 6379
-    restart: always  # ✅ Ensure Redis stays running
 
   celery:
     build: .
@@ -46,10 +39,9 @@ services:
     depends_on:
       - web
       - database
-      - cache
     environment:
-      - REDIS_URL=redis://cache:6379/0  # ✅ Use `cache:6379/0` inside Docker!
-      - CELERY_RESULT_BACKEND=redis://cache:6379/0
+      - REDIS_URL=${REDIS_URL}  # ✅ Use Railway Redis
+      - CELERY_RESULT_BACKEND=${REDIS_URL}  # ✅ Store Celery results in Railway Redis
     env_file:
       - .env  # ✅ Use environment variables
     restart: always  # ✅ Auto-restart on crash
@@ -61,11 +53,10 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - cache
       - celery
     environment:
-      - REDIS_URL=redis://cache:6379/0  # ✅ Use Redis as Celery Beat broker
-      - CELERY_RESULT_BACKEND=redis://cache:6379/0
+      - REDIS_URL=${REDIS_URL}  # ✅ Use Railway Redis
+      - CELERY_RESULT_BACKEND=${REDIS_URL}
     restart: always
 
 # Define shared volumes

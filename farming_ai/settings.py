@@ -345,12 +345,13 @@ OPENCAGE_API_KEY = os.getenv("OPENCAGE_API_KEY", default="")
 # Celery settings
 
 # ✅ Ensure Redis is correctly used inside Docker
-CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://cache:6379/0")  # Use `cache` inside Docker
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")  # Default for local
+
+CELERY_BROKER_URL = REDIS_URL  # ✅ Use Redis as Celery broker
+CELERY_RESULT_BACKEND = REDIS_URL  # ✅ Store Celery results in Redis
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://cache:6379/0")  # Store results in Redis
-
-
+CELERY_TIMEZONE = "UTC"  # ✅ Set timezone
 
 
 # LOGGING = {
