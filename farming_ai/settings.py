@@ -345,13 +345,18 @@ OPENCAGE_API_KEY = os.getenv("OPENCAGE_API_KEY", default="")
 # Celery settings
 
 # ✅ Ensure Redis is correctly used inside Docker
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")  # Default for local
+import os
 
-CELERY_BROKER_URL = REDIS_URL  # ✅ Use Redis as Celery broker
-CELERY_RESULT_BACKEND = REDIS_URL  # ✅ Store Celery results in Redis
+# ✅ Use Redis URL from Railway Variables
+REDIS_URL = os.getenv("REDIS_URL", "redis://default:sygEFwXsJDTUehgOwKEYWQUdPdfffCfO@aifarming.railway.internal:6379")
+
+# ✅ Set Celery to Use Redis
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
-CELERY_TIMEZONE = "UTC"  # ✅ Set timezone
+CELERY_TIMEZONE = "UTC"
 
 
 # LOGGING = {
