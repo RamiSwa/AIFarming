@@ -284,7 +284,8 @@ if USE_CLOUDFLARE_R2:
     # Ensure files are publicly accessible:
     AWS_DEFAULT_ACL = "public-read"
 
-    MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/"
+    # Use the R2.dev URL (note the hyphen)
+    MEDIA_URL = "https://pub-3b92dd5a0a764bdd951a4f40f92a4aa3.r2.dev/"
 else:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
