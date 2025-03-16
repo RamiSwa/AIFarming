@@ -569,8 +569,12 @@ class FileUploadAPIView(APIView):
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
-@method_decorator(csrf_exempt, name='dispatch')
+from rest_framework.permissions import AllowAny
+
+@method_decorator(csrf_exempt, name='dispatch')  # ✅ Exempt from CSRF
 class TaskStatusAPIView(APIView):
+    permission_classes = [AllowAny]  # ✅ Allow access without authentication
+
     def get(self, request, task_id, *args, **kwargs):
         task = AsyncResult(task_id)
         response_data = {
@@ -579,7 +583,6 @@ class TaskStatusAPIView(APIView):
             "result": task.result if task.successful() else None,
         }
         return Response(response_data)
-
 
 
 
