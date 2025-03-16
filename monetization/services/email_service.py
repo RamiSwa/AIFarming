@@ -77,6 +77,7 @@ def send_report_email(report_request, user, location, top_crop, pdf_url):
 
     # Download the PDF from Cloudflare R2 and attach it
     response = requests.get(pdf_url)
+    logger.info(f"PDF GET response status: {response.status_code}")
     if response.status_code == 200:
         email.attach("Soil_Report.pdf", response.content, "application/pdf")
         logger.info(f"✅ Attached PDF from {pdf_url}")
