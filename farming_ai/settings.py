@@ -220,21 +220,6 @@ AUTHENTICATION_BACKENDS = [
 # }
 
 
-import os
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv("POSTGRES_DB", "railway"),
-        'USER': os.getenv("POSTGRES_USER", "postgres"),  # ✅ Updated to 'postgres'
-        'PASSWORD': os.getenv("POSTGRES_PASSWORD", "EUuywVfrxLjHXmOadsZTuUDeWQCmNzwo"),  # ✅ New password
-        'HOST': os.getenv("PGHOST", "shuttle.proxy.rlwy.net"),  # ✅ New host
-        'PORT': os.getenv("PGPORT", "32356"),  # ✅ New port
-    }
-}
-
-if not DATABASES['default']['NAME']:
-    raise Exception("PostgreSQL Database not found. Check Railway environment variables.")
 
 
 
@@ -271,21 +256,53 @@ USE_I18N = True
 
 USE_TZ = True
 
+import os
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
+# ✅ PostgreSQL Database Configuration
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv("POSTGRES_DB", "railway"),
+        'USER': os.getenv("POSTGRES_USER", "postgres"),
+        'PASSWORD': os.getenv("POSTGRES_PASSWORD", "EUuywVfrxLjHXmOadsZTuUDeWQCmNzwo"),
+        'HOST': os.getenv("PGHOST", "shuttle.proxy.rlwy.net"),
+        'PORT': os.getenv("PGPORT", "32356"),
+    }
+}
 
-# Static Files
+if not DATABASES['default']['NAME']:
+    raise Exception("PostgreSQL Database not found. Check Railway environment variables.")
+
+# ✅ Static Files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]  # For additional static files (optional)
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # For production use
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# WhiteNoise Storage for static files
+# ✅ WhiteNoise for Static Files (Optimized)
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# Media Files (for user uploads)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# ✅ Enable Cloudflare R2 for Media Storage
+USE_CLOUDFLARE_R2 = True  # Change to False to disable Cloudflare R2
+
+if USE_CLOUDFLARE_R2:
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+    AWS_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "ai-farming-storage")
+    AWS_S3_ENDPOINT_URL = os.getenv("R2_ENDPOINT_URL", "https://5444121f8cb4233466360f77347d47e9.r2.cloudflarestorage.com")
+
+    AWS_S3_ADDRESSING_STYLE = "path"
+    AWS_QUERYSTRING_AUTH = False  # Prevents query params in file URLs
+
+    # ✅ Update MEDIA settings to use Cloudflare R2
+    MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/"
+else:
+    # ✅ Fallback to local storage
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
