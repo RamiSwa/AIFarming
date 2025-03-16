@@ -40,8 +40,8 @@ services:
       - web
       - database
     environment:
-      - REDIS_URL=${REDIS_URL}  # ✅ Use Railway Redis
-      - CELERY_RESULT_BACKEND=${REDIS_URL}  # ✅ Store Celery results in Railway Redis
+      - CELERY_BROKER_URL=${REDIS_URL}  # ✅ Use Railway Redis for task messaging
+      - CELERY_RESULT_BACKEND=django-db  # ✅ Store Celery results in PostgreSQL
     env_file:
       - .env  # ✅ Use environment variables
     restart: always  # ✅ Auto-restart on crash
@@ -55,8 +55,8 @@ services:
     depends_on:
       - celery
     environment:
-      - REDIS_URL=${REDIS_URL}  # ✅ Use Railway Redis
-      - CELERY_RESULT_BACKEND=${REDIS_URL}
+      - CELERY_BROKER_URL=${REDIS_URL}  # ✅ Use Railway Redis
+      - CELERY_RESULT_BACKEND=django-db  # ✅ Store Celery results in PostgreSQL
     restart: always
 
 # Define shared volumes
