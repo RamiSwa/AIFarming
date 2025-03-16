@@ -270,26 +270,17 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # ✅ Enable Cloudflare R2 for Media Storage
-USE_CLOUDFLARE_R2 = True  # Change to False to disable Cloudflare R2
+USE_CLOUDFLARE_R2 = True  # Ensure R2 is enabled
 
 if USE_CLOUDFLARE_R2:
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     AWS_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
-    AWS_STORAGE_BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "ai-farming-storage")
-    AWS_S3_ENDPOINT_URL = os.getenv("R2_ENDPOINT_URL", "https://5444121f8cb4233466360f77347d47e9.r2.cloudflarestorage.com")
-    
-    AWS_S3_ADDRESSING_STYLE = "virtual"  # Fix for R2 - ensures correct URL handling
-    AWS_QUERYSTRING_AUTH = False  # Keeps URLs clean (no ?AWSAccessKeyId=...)
+    AWS_STORAGE_BUCKET_NAME = "ai-farming-storage"
+    AWS_S3_ENDPOINT_URL = "https://5444121f8cb4233466360f77347d47e9.r2.cloudflarestorage.com"
 
-    # ⚠️ Remove AWS_DEFAULT_ACL because Cloudflare R2 does NOT support ACLs
-    # AWS_DEFAULT_ACL = "public-read"  # ❌ REMOVE THIS
-
-    # Instead, explicitly set files to public in upload settings (see below)
-
-    # ✅ Use Cloudflare R2 public URL
+    # ✅ Correctly set the public R2.dev URL
     MEDIA_URL = "https://pub-3b92dd5a0a764bdd951a4f40f92a4aa3.r2.dev/"
-    
 else:
     MEDIA_URL = "/media/"
     MEDIA_ROOT = os.path.join(BASE_DIR, "media")

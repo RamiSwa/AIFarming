@@ -12,7 +12,6 @@ from reportlab.lib import colors
 # Logger for debugging
 logger = logging.getLogger(__name__)
 
-
 def generate_order_pdf(order, user):
     """
     Generates an Order Confirmation PDF and saves it to Cloudflare R2.
@@ -57,7 +56,7 @@ def generate_order_pdf(order, user):
     text_obj.textLine(f"Total Amount: ${order.total_amount:.2f} {order.currency}")
     
     # ✅ Handle Discount Code (if exists)
-    discount_code = getattr(order, 'discount_code', None)
+    discount_code = getattr(order, 'discount_code', "").strip()
     if discount_code:
         text_obj.textLine(f"Discount Code: {discount_code}")
         
@@ -94,8 +93,10 @@ def generate_order_pdf(order, user):
 
     # ✅ Save to Cloudflare R2
     saved_file_name = default_storage.save(file_path, ContentFile(pdf_buffer.getvalue()))
-    file_url = default_storage.url(saved_file_name)  # ✅ Get public URL from R2
+    file_url = f"{settings.MEDIA_URL}{saved_file_name}"  # ✅ Ensure correct URL
 
-    logger.info(f"✅ Order PDF saved to Cloudflare R2: {file_url}")
+    # ✅ Log the saved file path & public URL
+    logger.info(f"📂 Saved File Path: {saved_file_name}")
+    logger.info(f"🌍 Public URL: {file_url}")
 
     return file_url  # ✅ Return Cloudflare R2 file URL

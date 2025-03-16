@@ -324,7 +324,7 @@ def generate_pdf(report_request, predictions, crop_details, recommended_crops, r
 
     # Save the PDF to Cloudflare R2 via Django's default storage.
     saved_file_key = default_storage.save(full_file_name, ContentFile(pdf_buffer.getvalue()))
-    file_url = default_storage.url(saved_file_key)  # Get public URL from R2
+    file_url = f"{settings.MEDIA_URL}{saved_file_key}"  # Get public URL from R2
 
     logger.info(f"✅ PDF saved to Cloudflare R2: {file_url}")
 
