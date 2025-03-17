@@ -85,7 +85,7 @@ def send_report_email(report_request, user, location, top_crop, pdf_url):
         logger.error(f"❌ Failed to download report from {pdf_url} (Status {response.status_code})")
 
     email.send()
-    logger.info(f"📧 Soil Report Email sent to {user.email}")
+    logger.info(f"📧 Soil Report Email sent to {user.email}" with PDF: {pdf_url}")
 
 
 def send_order_email(order, user):
