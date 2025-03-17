@@ -109,7 +109,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     
     # ✅ Custom Error Handling Middleware
-    'django.middleware.common.BrokenLinkEmailsMiddleware', 
+    # 'django.middleware.common.BrokenLinkEmailsMiddleware', 
     
     # ✅ Django Messages Middleware
     'django.contrib.messages.middleware.MessageMiddleware',

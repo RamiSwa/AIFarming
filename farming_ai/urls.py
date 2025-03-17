@@ -20,6 +20,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
 from monetization.admin import monetization_admin_site  
+from farming_ai.views import custom_404_view  
 
 
 urlpatterns = [
@@ -33,8 +34,6 @@ urlpatterns = [
     path("secure-dashboard/logout/", include("django.contrib.auth.urls")),
     path("monetization-admin/", monetization_admin_site.urls),  # ✅ Monetization Admin Panel
 
-
-
     # Regular user authentication
     path("accounts/", include("accounts.urls")),  
 
@@ -47,10 +46,10 @@ urlpatterns = [
 ]
 
 
+# ✅ This must be **after** urlpatterns
+handler404 = custom_404_view 
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     
     
-# ✅ This must be **after** urlpatterns
-handler404 = "farming_ai.views.custom_404_view"
