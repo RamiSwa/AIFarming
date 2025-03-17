@@ -18,7 +18,7 @@ def send_report_email(report_request, user, location, top_crop, pdf_url):
     """
 
     # ✅ Use absolute URL for the logo so it loads in email clients
-    logo_url = f"{settings.SITE_URL}{static('images/logo_AI_Farming.png')}"
+    logo_url = f"{settings.SITE_URL}{static('images/logo_AI_Farming_round.png')}"
 
     subject = f"Your AI Soil Analysis Report - {location}"
 
@@ -102,7 +102,7 @@ def send_order_email(order, user):
         discount_line = f"<p><strong>Discount Code:</strong> {discount_code}</p>"
     
     subject = f"Your Order Confirmation - Order #{order.order_number}"
-    logo_url = static("images/logo_AI_Farming.png")
+    logo_url = static("images/logo_AI_Farming_round.png")
     body_html = f"""
     <html>
     <head>

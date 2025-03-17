@@ -30,7 +30,7 @@ DEBUG = os.getenv('DEBUG', default=False)
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default='127.0.0.1,localhost,aifarming-production.up.railway.app').split(',')
 
-FRONTEND_URL = "http://127.0.0.1:8000"  # Change this to your frontend domain if needed
+FRONTEND_URL = "https://aifarming-production.up.railway.app"  # Change this to your frontend domain if needed
 
 SITE_URL = os.getenv("SITE_URL", "https://aifarming-production.up.railway.app")
 
