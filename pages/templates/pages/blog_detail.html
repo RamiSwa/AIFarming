@@ -18,7 +18,7 @@
     {% if blog_post.image %}
     <div class="row align-items-center">
         <div class="col-md-6 text-center">
-            <img src="{{ blog_post.image.url }}" class="blog-post-image img-fluid rounded mb-4" alt="{{ blog_post.title }}">
+            <img src="{{ blog_post.get_image_url }}" class="blog-post-image img-fluid rounded mb-4" alt="{{ blog_post.title }}">
         </div>
         <div class="col-md-6">
             <p class="lead blog-content">{{ blog_post.content|linebreaks }}</p>
@@ -37,7 +37,7 @@
             {% for related in related_posts %}
             <div class="col-md-4 d-flex">
                 <div class="card blog-card w-100">
-                    <img src="{{ related.image.url }}" class="card-img-top" alt="{{ related.title }}">
+                    <img src="{{ related.get_image_url }}" class="card-img-top" alt="{{ related.title }}">
                     <div class="card-body">
                         <h5 class="card-title">{{ related.title }}</h5>
                         <p class="card-text">{{ related.content|truncatewords:20 }}</p>

@@ -13,8 +13,15 @@ class LandingPage(models.Model):
     call_to_action = models.CharField(max_length=255, default="Get Started for Free")
     hero_image = models.ImageField(upload_to="landing_page/", blank=True, null=True)
 
+    def get_hero_image_url(self):
+        """Ensure the hero image always returns a Cloudflare R2 URL."""
+        if self.hero_image:
+            return f"{settings.MEDIA_URL}{self.hero_image.name}"
+        return "/static/images/default-hero.png"
+
     def __str__(self):
         return "Landing Page Content"
+
 
 
 class HowItWorksStep(models.Model):
@@ -51,22 +58,23 @@ class LandingPageFeature(models.Model):
     
 class Testimonial(models.Model):
     """User testimonials for the homepage."""
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)  # ✅ Use custom user model
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     name = models.CharField(max_length=255)
     role = models.CharField(max_length=255, blank=True, null=True)
     message = models.TextField()
-    image = models.ImageField(upload_to="testimonials/", blank=True, null=True)  # ✅ New image field
+    image = models.ImageField(upload_to="testimonials/", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_published = models.BooleanField(default=True)
+
+    def get_image_url(self):
+        """Ensure the image always returns a Cloudflare R2 URL."""
+        if self.image:
+            return f"{settings.MEDIA_URL}{self.image.name}"
+        return "/static/images/default-profile.png"
 
     def __str__(self):
         return f"{self.name} - {self.role}"
 
-    def get_image_url(self):
-        """Returns uploaded image if available, otherwise default image."""
-        if self.image:
-            return self.image.url
-        return "/static/images/default-profile.png"  # ✅ Default image
 
 class ContactMessage(models.Model):
     """Stores messages sent via the contact form."""
@@ -84,7 +92,7 @@ class ContactMessage(models.Model):
 
 class BlogPost(models.Model):
     """Blog articles to educate and engage users."""
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # ✅ Use custom user model
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, blank=True, help_text="SEO-friendly blog URL")
     content = models.TextField()
@@ -99,11 +107,14 @@ class BlogPost(models.Model):
             self.slug = slugify(self.title)
         super().save(*args, **kwargs)
 
+    def get_image_url(self):
+        """Ensure the image always returns a Cloudflare R2 URL."""
+        if self.image:
+            return f"{settings.MEDIA_URL}{self.image.name}"
+        return "/static/images/default.png"  # ✅ Default fallback image
+
     def __str__(self):
         return self.title
-
-    def get_absolute_url(self):
-        return f"/blog/{self.slug}/"
 
 
 
@@ -150,6 +161,16 @@ class AboutPage(models.Model):
     )
 
     founder_image = models.ImageField(upload_to="founder_images/", blank=True, null=True, help_text="Upload a picture of the founder.")
+
+
+    def get_founder_image_url(self):
+        """Ensure the founder image always returns a Cloudflare R2 URL."""
+        if self.founder_image:
+            return f"{settings.MEDIA_URL}{self.founder_image.name}"
+        return "/static/images/default-founder.png"
+
+    def __str__(self):
+        return "About Page Content"
 
     # Why AI Farming? Section
     why_ai_farming = models.TextField(

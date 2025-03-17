@@ -41,7 +41,7 @@
     <div class="row align-items-center g-4">
         <div class="col-md-4 text-center">
             {% if about_page.founder_image %}
-                <img src="{{ about_page.founder_image.url }}" class="img-fluid rounded-circle shadow-lg animate-fade mx-auto d-block founder-image" alt="{{ about_page.founder_name }}">
+                <img src="{{ about_page.get_founder_image_url }}" class="img-fluid rounded-circle shadow-lg animate-fade mx-auto d-block founder-image" alt="{{ about_page.founder_name }}">
             {% else %}
                 <img src="/static/images/default-founder.png" class="img-fluid rounded-circle shadow-lg animate-fade mx-auto d-block" alt="Founder">
             {% endif %}
