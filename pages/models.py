@@ -112,6 +112,10 @@ class BlogPost(models.Model):
         if self.image:
             return f"{settings.MEDIA_URL}{self.image.name}"
         return "/static/images/default.png"  # ✅ Default fallback image
+    
+    def get_absolute_url(self):
+        """Return the absolute URL for the blog post."""
+        return f"/blog/{self.slug}/"
 
     def __str__(self):
         return self.title
