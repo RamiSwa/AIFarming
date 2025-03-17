@@ -12,10 +12,10 @@
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card blog-card">
                 {% if post.get_image_url %}
-                    <img src="{{ post.get_image_url() }}" class="card-img-top" alt="{{ post.title }}">
-                {% else %}
-                    <img src="/static/images/default-blog.jpg" class="card-img-top" alt="Default Blog Image">
-                {% endif %}
+                <img src="{{ post.get_image_url }}" class="card-img-top" alt="{{ post.title }}">
+            {% else %}
+                <img src="/static/images/default-blog.jpg" class="card-img-top" alt="Default Blog Image">
+            {% endif %}            
                 <div class="card-body">
                     <h5 class="card-title">
                         <a href="{{ post.get_absolute_url }}" class="text-dark text-decoration-none">
