@@ -10,7 +10,8 @@ from django.utils import timezone
 from django.core.files.base import ContentFile
 from monetization.services.order_pdf import generate_order_pdf
 
-
+import boto3
+from botocore.exceptions import NoCredentialsError
 from accounts.utils import send_notification
 from django.core.files.storage import default_storage
 
@@ -273,7 +274,33 @@ class AIReport(models.Model):
             self.expires_at = None  # Subscriptions never expire
         super().save(*args, **kwargs)
 
+    def generate_presigned_url(self, expiration=3600):
+        """Generates a signed URL for secure download (expires in 1 hour)."""
+        if not self.report_file:
+            return None
 
+        try:
+            s3_client = boto3.client(
+                "s3",
+                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+            )
+
+            signed_url = s3_client.generate_presigned_url(
+                "get_object",
+                Params={
+                    "Bucket": settings.AWS_STORAGE_BUCKET_NAME,
+                    "Key": self.report_file.name,
+                },
+                ExpiresIn=expiration,  # URL valid for 1 hour
+            )
+
+            return signed_url
+
+        except NoCredentialsError:
+            return None  # If credentials are missing, return None
+        
 
     def __str__(self):
         return f"Report for {self.user.username} - {self.generated_at}"

@@ -114,29 +114,30 @@
                 </div>
 
                 <!-- ✅ AI Reports (Big Card) -->
-                <div class="col-md-6 mt-5">
-                    <div class="card shadow-lg border-0 rounded-lg mb-4 h-100">
-                        <div class="card-body">
-                            <h4 class="mb-5 text-primary text-center">📄 Your AI Reports</h4>
-                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-                                <ul class="list-group">
-                                    {% for report in ai_reports %}
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            <span><strong>Generated:</strong> {{ report.generated_at|date:"M d, Y" }}</span>
-                                            {% if report.status == "completed" %}
-                                                <a href="{{ report.report_file.url }}" class="btn btn-success btn-sm" download>📥 Download</a>
-                                            {% else %}
-                                                <span class="badge bg-warning">Processing...</span>
-                                            {% endif %}
-                                        </li>
-                                    {% empty %}
-                                        <li class="list-group-item text-center">No reports available.</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<!-- ✅ AI Reports (Big Card) -->
+<div class="col-md-6 mt-5">
+    <div class="card shadow-lg border-0 rounded-lg mb-4 h-100">
+        <div class="card-body">
+            <h4 class="mb-5 text-primary text-center">📄 Your AI Reports</h4>
+            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                <ul class="list-group">
+                    {% for report in ai_reports %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><strong>Generated:</strong> {{ report.generated_at|date:"M d, Y" }}</span>
+                            {% if report.status == "completed" %}
+                                <a href="{{ report.signed_url }}" class="btn btn-success btn-sm" download>📥 Download</a>
+                            {% else %}
+                                <span class="badge bg-warning">Processing...</span>
+                            {% endif %}
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item text-center">No reports available.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
 
             </div> <!-- End row -->
         </div>

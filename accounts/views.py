@@ -380,8 +380,12 @@ def dashboard_view(request):
     # ✅ Fetch User's Payments
     payments = Payment.objects.filter(user=user).order_by("-created_at")
 
-    # ✅ Fetch User's AI Reports
+    # ✅ Fetch User's AI Reports (with Signed URLs)
     ai_reports = AIReport.objects.filter(user=user).order_by("-generated_at")
+
+    # ✅ Generate signed URLs for each report
+    for report in ai_reports:
+        report.signed_url = report.generate_presigned_url()  # 🔥 Add signed URL
 
     # ✅ Fetch User's Notifications (Unread first)
     notifications = Notification.objects.filter(user=user).order_by("is_read", "-created_at")[:5]
@@ -394,10 +398,12 @@ def dashboard_view(request):
             "subscription": subscription,
             "orders": orders,
             "payments": payments,
-            "ai_reports": ai_reports,
-            "notifications": notifications,  # ✅ Add notifications to the template
+            "ai_reports": ai_reports,  # ✅ Pass signed URLs to template
+            "notifications": notifications,
         },
     )
+
+
 
 @login_required
 def mark_notifications_read(request):
