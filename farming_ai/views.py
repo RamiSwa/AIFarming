@@ -11,5 +11,4 @@ def custom_404_view(request, exception=None):
         return response
     except Exception as e:
         logger.error("Error rendering 404 page: %s", traceback.format_exc())
-        return render (request, "pages/404.html", status=404)
-
+        return HttpResponse("Page not found", status=404)

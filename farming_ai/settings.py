@@ -32,11 +32,13 @@ DEBUG = bool(strtobool(os.getenv('DEBUG', 'False')))
 
 
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default='127.0.0.1,localhost,aifarming-production.up.railway.app').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 
+    default='127.0.0.1,localhost,aifarming-production.up.railway.app,smartfarmai.online,www.smartfarmai.online'
+).split(',')
 
-FRONTEND_URL = "https://aifarming-production.up.railway.app"  # Change this to your frontend domain if needed
 
-SITE_URL = os.getenv("SITE_URL", "https://aifarming-production.up.railway.app")
+SITE_URL = os.getenv("SITE_URL", "https://smartfarmai.online")  # ✅ Update to your domain
+FRONTEND_URL = "https://smartfarmai.online"  # ✅ Use new domain for frontend
 
 
 
@@ -127,12 +129,12 @@ MIDDLEWARE = [
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = os.getenv(
     'CORS_ALLOWED_ORIGINS', 
-    default='http://127.0.0.1:8000,https://aifarming-production.up.railway.app'
+    default='http://127.0.0.1:8000,https://aifarming-production.up.railway.app,https://smartfarmai.online,https://www.smartfarmai.online'
 ).split(',')
 
 CSRF_TRUSTED_ORIGINS = os.getenv(
     'CSRF_TRUSTED_ORIGINS', 
-    default='https://aifarming-production.up.railway.app,http://127.0.0.1:8000'
+    default='https://aifarming-production.up.railway.app,http://127.0.0.1:8000,https://smartfarmai.online,https://www.smartfarmai.online'
 ).split(',')
 
 # ✅ Allow All Methods
@@ -145,12 +147,10 @@ SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 # ✅ Cookie Settings
 SESSION_COOKIE_NAME = "sessionid"  # Standard session cookie name
-SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', default=True)
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # ✅ Forces logout when browser closes
 SESSION_COOKIE_HTTPONLY = True  # ✅ Prevents JavaScript from accessing session cookies
 
 # ✅ CSRF Settings (Important)
-CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', default=True)
 CSRF_COOKIE_HTTPONLY = False
 
 
@@ -320,8 +320,6 @@ TRAINED_MODELS_DIR = os.path.join(BASE_DIR, "trained_models")
 OPENCAGE_API_KEY = os.getenv("OPENCAGE_API_KEY", default="")
 # Celery settings
 
-# ✅ Ensure Redis is correctly used inside Docker
-import os
 
 # ✅ Use Redis as the Celery task broker (message queue)
 CELERY_BROKER_URL = os.getenv(
@@ -411,6 +409,7 @@ JAZZMIN_SETTINGS["custom_links"] = {
 
 SESSION_COOKIE_AGE = 1800  # ✅ Auto logout after 30 minutes
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SECURE_SSL_REDIRECT = True
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
