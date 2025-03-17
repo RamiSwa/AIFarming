@@ -89,13 +89,13 @@ def process_payment(request):
 def payment_success(request):
     """
     Handle both subscription and one-time payment success.
-    We first check for a subscription_id query parameter.
-    If found, we update the subscription and return immediately,
-    skipping the one-time payment capture flow.
     """
+    logger.info(f"✅ Payment success triggered for user: {request.user.email}")
+
     # --- Subscription branch ---
     subscription_id = request.GET.get("subscription_id")
     if subscription_id:
+        logger.info(f"🔄 Processing subscription payment for subscription_id: {subscription_id}")
         subscription = Subscription.objects.filter(subscription_id=subscription_id).first()
         if subscription:
             if subscription.status == "canceled":
@@ -103,10 +103,12 @@ def payment_success(request):
                 messages.success(request, "Your subscription has been reactivated!")
             else:
                 messages.info(request, "Your subscription is now active!")
+
             if subscription.plan.duration == "monthly":
                 subscription.next_billing_date = now() + timedelta(days=30)
             else:  # assuming annual
                 subscription.next_billing_date = now() + timedelta(days=365)
+
             subscription.save()
 
             order = Order.objects.filter(order_type="subscription", subscription=subscription).first()
@@ -134,6 +136,8 @@ def payment_success(request):
 
     # --- One-time payment branch ---
     order_id_param = request.GET.get("token")
+    logger.info(f"🔄 Processing one-time payment for order_id: {order_id_param}")
+
     client_id, secret_key = get_paypal_credentials()
     if not client_id:
         return render(request, 'monetization/report_success.html', {"error": "PayPal credentials not found."})
@@ -148,14 +152,18 @@ def payment_success(request):
     token_response = requests.post(TOKEN_URL, auth=auth, data=data, headers=headers)
     if token_response.status_code != 200:
         return render(request, 'monetization/report_success.html', {"error": "Failed to authenticate with PayPal."})
+
     access_token = token_response.json().get("access_token")
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {access_token}"}
     capture_response = requests.post(CAPTURE_URL, headers=headers)
     if capture_response.status_code != 201:
         return render(request, 'monetization/report_success.html', {"error": "Payment capture failed."})
+
     capture_data = capture_response.json()
     transaction_id = capture_data["id"]
     status_str = capture_data["status"]
+
+    logger.info(f"✅ Payment captured successfully with transaction_id: {transaction_id}")
 
     payment = Payment.objects.filter(transaction_id=order_id_param).first()
     if payment:
@@ -181,44 +189,59 @@ def payment_success(request):
             order = Order.objects.filter(payment=payment, order_type="one_time").first()
 
     send_order_email(order, request.user)
+    logger.info(f"📧 Order confirmation email sent to {request.user.email}")
 
     # --- PDF Report Generation for one-time payments ---
     report_url = None
     report_request_id = request.session.get("report_request_id")
-    if report_request_id and payment and payment.status == "completed":
-        try:
-            report_request = ReportRequest.objects.get(id=report_request_id)
-            report_data = report_request.report_data or {}
-            # generate_pdf now returns the full file URL (with unique timestamp)
-            pdf_url = generate_pdf(
-                report_request,
-                predictions=report_data.get("predictions", {}),
-                crop_details=report_data.get("crop_details", []),
-                recommended_crops=report_data.get("recommended_crops", []),
-                risk_assessment=report_data.get("risk_assessment", ""),
-                mitigation_strategies=report_data.get("mitigation_strategies", ""),
-                ai_alerts=report_data.get("ai_alerts", []),
-                next_best_action=report_data.get("next_best_action", ""),
-                historical_weather=report_data.get("historical_weather", {}),
-                regional_avg_yield=report_data.get("regional_avg_yield", {}),
-                user_data=report_data.get("user_data", {}),
-                future_climate=report_data.get("future_climate", {}),
-                rotation_plan=report_data.get("rotation_plan", "")
-            )
-            # Create the AIReport record using the pdf_url directly
-            ai_report = AIReport.objects.create(
-                user=request.user,
-                report_file=pdf_url,  # storing the URL (or you might store the file key if needed)
-                payment=payment,
-                status="completed"
-            )
-            # Pass the pdf_url to the email service so it attaches the correct file
-            send_report_email(report_request, request.user, report_request.location, None, pdf_url)
-            report_url = pdf_url
-            # Clear the report request from session
-            del request.session["report_request_id"]
-        except Exception as e:
-            logger.error(f"Error generating PDF report: {str(e)}")
+
+    logger.info(f"🔍 Checking report_request_id: {report_request_id}")
+    if not report_request_id:
+        messages.error(request, "Error: Report request ID is missing.")
+        return redirect("request_soil_report")
+
+    try:
+        report_request = ReportRequest.objects.get(id=report_request_id)
+        report_data = report_request.report_data or {}
+
+        logger.info(f"🔄 Generating PDF for user: {request.user.email}")
+
+        # generate_pdf now returns the full file URL (with unique timestamp)
+        pdf_url = generate_pdf(
+            report_request,
+            predictions=report_data.get("predictions", {}),
+            crop_details=report_data.get("crop_details", []),
+            recommended_crops=report_data.get("recommended_crops", []),
+            risk_assessment=report_data.get("risk_assessment", ""),
+            mitigation_strategies=report_data.get("mitigation_strategies", ""),
+            ai_alerts=report_data.get("ai_alerts", []),
+            next_best_action=report_data.get("next_best_action", ""),
+            historical_weather=report_data.get("historical_weather", {}),
+            regional_avg_yield=report_data.get("regional_avg_yield", {}),
+            user_data=report_data.get("user_data", {}),
+            future_climate=report_data.get("future_climate", {}),
+            rotation_plan=report_data.get("rotation_plan", "")
+        )
+
+        logger.info(f"✅ PDF generated successfully: {pdf_url}")
+
+        ai_report = AIReport.objects.create(
+            user=request.user,
+            report_file=pdf_url,
+            payment=payment,
+            status="completed"
+        )
+
+        logger.info(f"✅ AI Report saved in DB for user: {request.user.email}, file: {pdf_url}")
+
+        send_report_email(report_request, request.user, report_request.location, None, pdf_url)
+        logger.info(f"📧 Email sent to user: {request.user.email}")
+
+        del request.session["report_request_id"]
+
+    except Exception as e:
+        logger.error(f"❌ Error generating PDF report: {str(e)}", exc_info=True)
+
     return render(request, 'monetization/payment_success.html', {
         "status": payment.status if payment else "failed",
         "report_url": report_url
