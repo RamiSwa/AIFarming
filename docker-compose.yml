@@ -9,8 +9,7 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
-      - ./trained_models:/app/trained_models
-      - ./media:/app/media
+      - ./trained_models:/app/trained_models  # ✅ Keep only necessary volumes
     depends_on:
       - database
     env_file:
@@ -34,8 +33,7 @@ services:
     command: celery -A farming_ai worker --loglevel=info --concurrency=2
     volumes:
       - .:/app
-      - ./trained_models:/app/trained_models
-      - ./media:/app/media
+      - ./trained_models:/app/trained_models  # ✅ Remove media (handled by R2)
     depends_on:
       - web
       - database
@@ -62,4 +60,3 @@ services:
 # Define shared volumes
 volumes:
   postgres_fresh_data:
-  media:
