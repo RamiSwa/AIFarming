@@ -15,30 +15,32 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from django.conf.urls.static import static
+
+
 from django.conf import settings
+from django.conf.urls.static import static 
 from django.contrib import admin
 from django.urls import path, include
 from monetization.admin import monetization_admin_site  
 
 
+
+# ✅ Correct 404 handler
+handler404 = "farming_ai.views.custom_404_view"
+
 urlpatterns = [
-    # 2FA routes
-    # Fake Admin Trap
-    path('admin/', include('honeypot_admin.urls')),
+    # ✅ Fake Admin Trap (Honeypot)
+    path("admin/", include("honeypot_admin.urls")),
 
     # ✅ Secure Admin Panel with 2FA
     path("secure-dashboard/", admin.site.urls),
-  # ✅ Correct 2FA login
     path("secure-dashboard/logout/", include("django.contrib.auth.urls")),
     path("monetization-admin/", monetization_admin_site.urls),  # ✅ Monetization Admin Panel
 
-
-
-    # Regular user authentication
+    # ✅ User Authentication
     path("accounts/", include("accounts.urls")),  
 
-    # Other App URLs
+    # ✅ Other App URLs
     path("weather/", include("weather.urls")), 
     path("soil/", include("soil.urls")), 
     path("recommendations/", include("recommendations.urls")), 
@@ -46,7 +48,6 @@ urlpatterns = [
     path("monetization/", include("monetization.urls")),
 ]
 
-
-
+# ✅ Serve media files in development only
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
