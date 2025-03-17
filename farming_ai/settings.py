@@ -282,8 +282,8 @@ if USE_CLOUDFLARE_R2:
     AWS_STORAGE_BUCKET_NAME = "ai-farming-storage"
     AWS_S3_ENDPOINT_URL = "https://5444121f8cb4233466360f77347d47e9.r2.cloudflarestorage.com"
 
-    # ✅ Correctly set the public R2.dev URL
-    MEDIA_URL = "https://pub-3b92dd5a0a764bdd951a4f40f92a4aa3.r2.dev/"
+    # ✅ Use the new custom domain instead of R2.dev
+    MEDIA_URL = "https://cdn.smartfarmai.online/"
 else:
     MEDIA_URL = "/media/"
     MEDIA_ROOT = os.path.join(BASE_DIR, "media")
