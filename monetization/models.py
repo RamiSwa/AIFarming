@@ -14,6 +14,8 @@ import boto3
 from botocore.exceptions import NoCredentialsError
 from accounts.utils import send_notification
 from django.core.files.storage import default_storage
+from botocore.config import Config
+
 
 
 
@@ -253,17 +255,22 @@ class PayPalConfig(models.Model):
 
 
 
+
 class AIReport(models.Model):
     """Stores AI-generated land reports after successful payment."""
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     report_file = models.FileField(upload_to="reports/")
     generated_at = models.DateTimeField(auto_now_add=True)
     payment = models.OneToOneField(Payment, on_delete=models.CASCADE, blank=True, null=True)
-    status = models.CharField(max_length=20, choices=[
-        ("processing", "Processing"),
-        ("completed", "Completed"),
-        ("failed", "Failed"),
-    ], default="processing")
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("processing", "Processing"),
+            ("completed", "Completed"),
+            ("failed", "Failed"),
+        ],
+        default="processing",
+    )
     expires_at = models.DateTimeField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
@@ -285,6 +292,7 @@ class AIReport(models.Model):
                 aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
                 aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
                 endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+                config=Config(signature_version="s3v4"),  # ✅ Force SigV4
             )
 
             signed_url = s3_client.generate_presigned_url(
@@ -300,11 +308,11 @@ class AIReport(models.Model):
 
         except NoCredentialsError:
             return None  # If credentials are missing, return None
-        
 
     def __str__(self):
         return f"Report for {self.user.username} - {self.generated_at}"
-    
+
+  
 def generate_ai_report(report):
     report.status = "completed"
     report.save()
