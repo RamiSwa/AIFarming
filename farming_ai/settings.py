@@ -127,16 +127,18 @@ MIDDLEWARE = [
 
 
 # CORS & CSRF Settings
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True  # ✅ Allows credentials (cookies, auth headers)
 CORS_ALLOWED_ORIGINS = os.getenv(
     'CORS_ALLOWED_ORIGINS', 
     default='http://127.0.0.1:8000,https://aifarming-production.up.railway.app,https://smartfarmai.online,https://www.smartfarmai.online'
 ).split(',')
 
+
 CSRF_TRUSTED_ORIGINS = os.getenv(
     'CSRF_TRUSTED_ORIGINS', 
     default='https://aifarming-production.up.railway.app,http://127.0.0.1:8000,https://smartfarmai.online,https://www.smartfarmai.online'
 ).split(',')
+
 
 # ✅ Allow All Methods
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
@@ -157,7 +159,8 @@ CSRF_COOKIE_HTTPONLY = False
 
 # ✅ CORS Os.getenvuration
 # ✅ Allow X-Auth-Token in responses
-CORS_ALLOW_HEADERS = ["*"]
+CORS_ALLOW_HEADERS = ["Authorization", "Content-Type", "X-CSRFToken"]
+
 
 
 # ✅ Enable CORS for your frontend (Adjust as needed)
@@ -238,8 +241,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
-import os
 
 # ✅ PostgreSQL Database Configuration
 DATABASES = {
