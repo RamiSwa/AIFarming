@@ -1,24 +1,25 @@
 # ✅ Use a lightweight Python image
-FROM python:3.10-slim
+FROM python:3.10-slim AS builder
 
 # ✅ Set the working directory
 WORKDIR /app
 
-# ✅ Install system dependencies
+# ✅ Install system dependencies & PostgreSQL client
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
+    postgresql-client \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # ✅ Copy and install dependencies first (optimized caching)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# ✅ Install PostgreSQL client & curl
-RUN apt-get update && apt-get install -y postgresql-client curl && rm -rf /var/lib/apt/lists/*
-
-
-# ✅ Copy the project files (except .env)
+# ✅ Second stage - Only copy necessary files
+FROM python:3.10-slim
+WORKDIR /app
+COPY --from=builder /usr/local/lib/python3.10 /usr/local/lib/python3.10
 COPY . .
 
 # ✅ Expose the port for Django
@@ -28,5 +29,5 @@ EXPOSE 8000
 RUN python manage.py migrate --noinput
 RUN python manage.py collectstatic --noinput
 
-# ✅ Use Gunicorn for production
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "farming_ai.wsgi:application"]
+# ✅ Start Gunicorn with more workers & timeout fixes
+CMD ["gunicorn", "--workers=3", "--timeout=120", "--worker-class=gevent", "--bind", "0.0.0.0:8000", "farming_ai.wsgi:application"]
