@@ -39,9 +39,9 @@ class Payment(models.Model):
     payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPES, default="one_time")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     transaction_id = models.CharField(max_length=255, blank=True, null=True, unique=True)
-    receipt_url = models.URLField(blank=True, null=True)  # PayPal receipt link
+    receipt_url = models.URLField(max_length=500, blank=True, null=True)  # PayPal receipt link
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    discount_code = models.CharField(max_length=50, blank=True, null=True)
+    discount_code = models.CharField(max_length=100, blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -181,13 +181,13 @@ class Order(models.Model):
     subscription = models.ForeignKey('Subscription', on_delete=models.SET_NULL, null=True, blank=True)
     order_type = models.CharField(max_length=20, choices=ORDER_TYPES)
     order_status = models.CharField(max_length=20, choices=ORDER_STATUSES, default="pending")
-    order_number = models.CharField(max_length=50, unique=True, null=True, blank=True)
+    order_number = models.CharField(max_length=100, unique=True, null=True, blank=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    discount_code = models.CharField(max_length=50, blank=True, null=True)
+    discount_code = models.CharField(max_length=100, blank=True, null=True)
     currency = models.CharField(max_length=10, default="USD")
     created_at = models.DateTimeField(auto_now_add=True)
-    report_url = models.URLField(blank=True, null=True)
-    receipt_url = models.URLField(blank=True, null=True)  # ✅ PayPal receipt link
+    report_url = models.URLField(max_length=500, blank=True, null=True)  
+    receipt_url = models.URLField(max_length=500, blank=True, null=True)  # ✅ PayPal receipt link
 
     report_pdf = models.FileField(upload_to="orders_pdfs/", blank=True, null=True)
 
