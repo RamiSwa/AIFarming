@@ -207,7 +207,7 @@ def payment_success(request):
         logger.info(f"🔄 Generating PDF for user: {request.user.email}")
 
         # generate_pdf now returns the full file URL (with unique timestamp)
-        pdf_url = generate_pdf(
+        saved_file_key, pdf_url = generate_pdf(
             report_request,
             predictions=report_data.get("predictions", {}),
             crop_details=report_data.get("crop_details", []),
@@ -227,7 +227,7 @@ def payment_success(request):
 
         ai_report = AIReport.objects.create(
             user=request.user,
-            report_file=pdf_url,
+            report_file=saved_file_key,
             payment=payment,
             status="completed"
         )
@@ -244,5 +244,8 @@ def payment_success(request):
 
     return render(request, 'monetization/payment_success.html', {
         "status": payment.status if payment else "failed",
-        "report_url": report_url
+        "report_url": pdf_url
     })
+
+
+

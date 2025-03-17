@@ -52,11 +52,14 @@ def generate_pdf_report(request):
     if not report_request_id:
         messages.error(request, "No report request found.")
         return redirect("request_soil_report")
+
     try:
         report_request = ReportRequest.objects.get(id=report_request_id)
         report_data = report_request.report_data or {}
-        
-        # generate_pdf now returns a tuple: (relative_file_key, full_public_url)
+
+        logger.info(f"🔄 Generating PDF for user: {request.user.email}")
+
+        # Generate PDF and get file URL
         saved_file_key, pdf_url = generate_pdf(
             report_request,
             predictions=report_data.get("predictions", {}),
@@ -72,7 +75,9 @@ def generate_pdf_report(request):
             future_climate=report_data.get("future_climate", {}),
             rotation_plan=report_data.get("rotation_plan", "")
         )
-        
+
+        logger.info(f"✅ PDF Key: {saved_file_key}, URL: {pdf_url}")
+
         # Store the relative file key in the AIReport record.
         ai_report = AIReport.objects.create(
             user=request.user,
@@ -80,14 +85,20 @@ def generate_pdf_report(request):
             payment=None,
             status="completed"
         )
-        
+
+        logger.info(f"✅ AIReport saved for user {request.user.email}: {ai_report.report_file}")
+
         # Pass the full public URL to the email service.
+        logger.info(f"📧 Attempting to send email to {request.user.email} with PDF: {pdf_url}")
         send_report_email(report_request, request.user, report_request.location, None, pdf_url)
-        
+
         # Clear the report request from session.
         del request.session["report_request_id"]
+
+        logger.info(f"✅ Report URL passed to template: {pdf_url}")
         return render(request, 'monetization/report_success.html', {"report_url": pdf_url})
+
     except Exception as e:
-        logger.error(f"Error generating PDF report: {str(e)}")
+        logger.error(f"❌ Error generating PDF report: {str(e)}", exc_info=True)
         messages.error(request, "Error generating report. Please try again.")
         return redirect("request_soil_report")
