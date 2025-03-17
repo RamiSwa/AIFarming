@@ -120,6 +120,7 @@ MIDDLEWARE = [
     'axes.middleware.AxesMiddleware',
 
     # ✅ Custom Middleware (Ensure correct path)
+    "farming_ai.middleware.BlockWordPressScansMiddleware", 
     "farming_ai.middleware.RestrictAdminAccessMiddleware",  
 ]
 
