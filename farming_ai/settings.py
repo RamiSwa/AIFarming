@@ -31,10 +31,17 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dsj68iiok02=&#q56$4+l4x73=
 DEBUG = bool(strtobool(os.getenv('DEBUG', 'False')))
 
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 
-    default='127.0.0.1,localhost,aifarming-production.up.railway.app,smartfarmai.online,www.smartfarmai.online'
-).split(',')
+# ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 
+#     default='127.0.0.1,localhost,aifarming-production.up.railway.app,smartfarmai.online,www.smartfarmai.online'
+# ).split(',')
 
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "aifarming-production.up.railway.app",
+    "smartfarmai.online",
+    "www.smartfarmai.online"
+]
 
 
 SITE_URL = os.getenv("SITE_URL", "https://smartfarmai.online")  # ✅ Update to your domain

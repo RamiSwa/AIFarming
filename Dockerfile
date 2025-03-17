@@ -28,5 +28,5 @@ EXPOSE 8000
 RUN python manage.py migrate --noinput
 RUN python manage.py collectstatic --noinput
 
-# ✅ Use Gunicorn for production
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "farming_ai.wsgi:application"]
+# Use Gunicorn for production, binding to the port from the environment variable
+CMD gunicorn --bind 0.0.0.0:$PORT farming_ai.wsgi:application
