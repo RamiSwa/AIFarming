@@ -16,6 +16,9 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# ✅ Ensure Gunicorn is installed & print version
+RUN python -m pip install --no-cache-dir gunicorn && gunicorn --version
+
 # ✅ Second stage - Only copy necessary files
 FROM python:3.10-slim
 WORKDIR /app
