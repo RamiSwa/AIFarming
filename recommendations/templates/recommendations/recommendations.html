@@ -217,21 +217,22 @@
   </div>
 
   <!-- Mobile Dropdown Navigation -->
-  <div class="dropdown d-md-none text-center">
-    <button 
-      class="btn btn-outline-secondary dropdown-toggle w-100" 
-      type="button" 
-      id="mobileDropdown" 
-      data-bs-toggle="dropdown" 
-      aria-expanded="false">
-      🌍 Navigate
-    </button>
-    <ul class="dropdown-menu w-100 text-center" aria-labelledby="mobileDropdown">
-      <li><a class="dropdown-item" href="{% url 'fetch_results' %}">📥 Fetch AI Results</a></li>
-      <li><a class="dropdown-item" href="{% url 'manage_recommendations' %}">📋 Manage Recommendations</a></li>
-      <li><a class="dropdown-item" href="{% url 'csv_upload' %}">📂 CSV Upload & Export</a></li>
-    </ul>
-  </div>
+<!-- ✅ FIXED: Mobile Dropdown Navigation with unique ID -->
+<div class="dropdown d-md-none text-center">
+  <button 
+    class="btn btn-outline-secondary dropdown-toggle w-100" 
+    type="button" 
+    id="recommendationMobileDropdown" 
+    data-bs-toggle="dropdown" 
+    aria-expanded="false">
+    🌍 Navigate
+  </button>
+  <ul class="dropdown-menu w-100 text-center" aria-labelledby="recommendationMobileDropdown">
+    <li><a class="dropdown-item" href="{% url 'fetch_results' %}">📥 Fetch AI Results</a></li>
+    <li><a class="dropdown-item" href="{% url 'manage_recommendations' %}">📋 Manage Recommendations</a></li>
+    <li><a class="dropdown-item" href="{% url 'csv_upload' %}">📂 CSV Upload & Export</a></li>
+  </ul>
+</div>
 
   <!-- Internal Tab Navigation -->
   <ul class="nav nav-tabs nav-recommendations" id="recommendationsTab" role="tablist">
@@ -422,8 +423,9 @@ function toggleGuide() {
     document.addEventListener("DOMContentLoaded", function () {
 
     // Ensure the Bootstrap dropdown works properly
-    let dropdownButton = document.getElementById("mobileDropdown");
-    let dropdownMenu = document.querySelector(".dropdown-menu");
+    let dropdownButton = document.getElementById("recommendationMobileDropdown");
+    let dropdownMenu = document.querySelector('[aria-labelledby="recommendationMobileDropdown"]');
+    
 
     dropdownButton.addEventListener("click", function (event) {
       event.stopPropagation(); // Prevent accidental closing
