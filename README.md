@@ -6,9 +6,9 @@
 
 ## 📸 Preview
 
-![AI Farming Screenshot](![AI-Farming](https://github.com/user-attachments/assets/f92bf4ae-e82d-413f-906b-2236feef7962)) <!-- Replace with your image path -->
+![AI Farming Screenshot](https://github.com/user-attachments/assets/f92bf4ae-e82d-413f-906b-2236feef7962)
 
-🔗 **Live Demo**: [your-demo-url.com](https://smartfarmai.online)
+🔗 **Live Demo**: [smartfarmai.online](https://smartfarmai.online)
 
 ---
 
@@ -64,8 +64,10 @@
 git clone https://github.com/yourusername/ai-farming.git
 cd ai-farming
 python -m venv venv
-source venv/bin/activate  # For macOS/Linux
-venv\Scripts\activate  # For Windows
+source venv/bin/activate  # macOS/Linux
+# OR
+venv\Scripts\activate  # Windows
+
 pip install -r requirements.txt
 
 docker-compose up --build
