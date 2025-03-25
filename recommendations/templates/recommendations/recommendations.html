@@ -279,6 +279,35 @@
 </div>
 
 </main>
+<style>
+  /* Fix dropdown image alignment inside navbar */
+  .navbar .dropdown .dropdown-toggle img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+    background-color: transparent;
+    border: none;
+  }
+
+  /* Prevent white background */
+  .navbar .dropdown-toggle {
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  /* Ensure dropdown appears inside nav on mobile */
+  @media (max-width: 576px) {
+    .navbar .dropdown-menu {
+      position: static !important;
+      float: none;
+      width: 100%;
+      margin-top: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  }
+</style>
 
 
 <!-- Custom CSS for Summary Cards -->
